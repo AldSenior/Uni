@@ -35,14 +35,17 @@ export const VK_AUTH: React.FC = () => {
 						showAlternativeLogin: true,
 					})
 					.on(VKID.WidgetEvents.ERROR, handleVKIDError)
-					.on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, payload => {
-						const code = payload.code
-						const deviceId = payload.device_id
+					.on(
+						VKID.OneTapInternalEvents.LOGIN_SUCCESS,
+						(payload: { code: any; device_id: any }) => {
+							const code = payload.code
+							const deviceId = payload.device_id
 
-						VKID.Auth.exchangeCode(code, deviceId)
-							.then(handleVKIDSuccess)
-							.catch(handleVKIDError)
-					})
+							VKID.Auth.exchangeCode(code, deviceId)
+								.then(handleVKIDSuccess)
+								.catch(handleVKIDError)
+						}
+					)
 			}
 		}
 		document.body.appendChild(script)
