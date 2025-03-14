@@ -1,12 +1,30 @@
 'use client' // Указываем, что это клиентский компонент
 import React, { useEffect } from 'react'
 
+// Типы для данных авторизации VKID
+interface VKIDSuccessData {
+	access_token: string
+	expires_in: number
+	user_id: number
+	email?: string
+}
+
+interface VKIDError {
+	error: string
+	error_description: string
+}
+
+interface VKIDPayload {
+	code: string
+	device_id: string
+}
+
 export const VK_AUTH: React.FC = () => {
-	const handleVKIDSuccess = (data: any) => {
+	const handleVKIDSuccess = (data: VKIDSuccessData) => {
 		console.log('Успешная авторизация:', data)
 	}
 
-	const handleVKIDError = (error: any) => {
+	const handleVKIDError = (error: VKIDError) => {
 		console.error('Ошибка авторизации:', error)
 	}
 
@@ -17,7 +35,7 @@ export const VK_AUTH: React.FC = () => {
 		script.async = true
 		script.onload = () => {
 			if ('VKIDSDK' in window) {
-				const VKID: any = window.VKIDSDK
+				const VKID = (window as any).VKIDSDK
 
 				VKID.Config.init({
 					app: 53263292,
@@ -37,11 +55,9 @@ export const VK_AUTH: React.FC = () => {
 					.on(VKID.WidgetEvents.ERROR, handleVKIDError)
 					.on(
 						VKID.OneTapInternalEvents.LOGIN_SUCCESS,
-						(payload: { code: any; device_id: any }) => {
-							const code = payload.code
-							const deviceId = payload.device_id
-
-							VKID.Auth.exchangeCode(code, deviceId)
+						(payload: VKIDPayload) => {
+							const { code, device_id } = payload
+							VKID.Auth.exchangeCode(code, device_id)
 								.then(handleVKIDSuccess)
 								.catch(handleVKIDError)
 						}
