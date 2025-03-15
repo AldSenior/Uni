@@ -11,7 +11,7 @@ export async function POST(request) {
 		// Параметры из настроек приложения VK
 		const CLIENT_ID = 53263292
 		const CLIENT_SECRET = 'xK4loxyZGbRjhC7OjBw2'
-		const REDIRECT_URI = 'https://www.unimessage.ru/vk-callback'
+		const REDIRECT_URI = 'https://www.unimessage.ru/api/vk/exchange-code'
 
 		// Обмен кода на токен
 		const tokenResponse = await fetch(
