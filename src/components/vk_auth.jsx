@@ -6,9 +6,8 @@ const VK_AUTH = () => {
 
 	useEffect(() => {
 		const script = document.createElement('script')
-		// 1. Исправляем URL загрузки SDK
 		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
-		script.type = 'text/javascript' // Добавляем явное указание типа
+		script.type = 'text/javascript'
 		script.async = true
 		script.onload = () => {
 			if ('VKIDSDK' in window) {
@@ -17,6 +16,7 @@ const VK_AUTH = () => {
 					OneTap,
 					WidgetEvents,
 					OneTapInternalEvents,
+					ConfigSource,
 					ConfigResponseMode,
 				} = window.VKIDSDK
 
@@ -24,7 +24,7 @@ const VK_AUTH = () => {
 					app: 53263292,
 					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
 					responseMode: ConfigResponseMode.Callback,
-					source: VKID.ConfigSource.LOWCODE,
+					source: ConfigSource.LOWCODE,
 					scope: 'messages', // Исправлено с message на messages
 				})
 
