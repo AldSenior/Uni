@@ -41,10 +41,14 @@ const MessagesPage = () => {
 		<div>
 			<h1>Мои диалоги</h1>
 			<ul>
-				{conversations.map(conversation => (
-					<li key={conversation.conversation.peer.id}>
-						<p>ID диалога: {conversation.conversation.peer.id}</p>
-						<p>Последнее сообщение: {conversation.last_message.text}</p>
+				{messages.map((msg, i) => (
+					<li key={i}>
+						<p>
+							<strong>{msg.from}</strong> ({msg.date})
+						</p>
+						<p>
+							{msg.text} {msg.attachments}
+						</p>
 					</li>
 				))}
 			</ul>
