@@ -13,7 +13,7 @@ export async function POST(request) {
 	try {
 		// Обмен кода на токен
 		const tokenResponse = await fetch(
-			`https://oauth.vk.com/access_token?client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&redirect_uri=YOUR_REDIRECT_URI&code=${code}`,
+			`https://oauth.vk.com/access_token?client_id=53263292&client_secret=xK4loxyZGbRjhC7OjBw2&redirect_uri=https://www.unimessage.ru/vk-callback&code=${code}`,
 			{
 				method: 'GET',
 			}
