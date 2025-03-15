@@ -1,5 +1,5 @@
 import VK_AUTH from '@/components/vk_auth'
-export default VK_CALLBACK = () => {
+export default function vkPageAuth() {
 	return (
 		<>
 			<p>Проверка</p>
