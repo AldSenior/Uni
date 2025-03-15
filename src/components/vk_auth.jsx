@@ -7,7 +7,7 @@ const VK_AUTH = () => {
 	useEffect(() => {
 		const script = document.createElement('script')
 		// 1. Исправляем URL загрузки SDK
-		script.src = 'https://unpkg.com/@vkid/sdk@3.0.0/dist/umd/index.js'
+		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist/umd/index.js'
 		script.type = 'text/javascript' // Добавляем явное указание типа
 		script.async = true
 		script.onload = () => {
