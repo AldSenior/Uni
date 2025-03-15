@@ -25,7 +25,7 @@ const VK_AUTH = () => {
 					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
-					scope: 'messages', // Исправлено на messages
+					scope: 'message',
 				})
 
 				// Создаем экземпляр One Tap
