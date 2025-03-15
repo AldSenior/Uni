@@ -1,7 +1,6 @@
-// app/api/vk/conversations/route.ts
 import { NextResponse } from 'next/server'
 
-export async function POST(request) {
+export async function POST(request: Request) {
 	const { access_token } = await request.json()
 
 	if (!access_token) {
@@ -12,36 +11,19 @@ export async function POST(request) {
 	}
 
 	try {
+		// Запрос к VK API (используем GET!)
 		const response = await fetch(
-			`https://api.vk.com/method/messages.getConversations?access_token=${access_token}&v=5.131`,
-			{
-				method: 'POST', // или 'GET', так как параметры передаются в URL
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			}
+			`https://api.vk.com/method/messages.getConversations?access_token=${access_token}&v=5.131`
 		)
 
-		const rawResponse = await response.text() // Логируем сырой ответ
-		console.log('Raw response:', rawResponse)
-
-		const data = JSON.parse(rawResponse)
+		const data = await response.json()
 
 		if (data.error) {
-			// Обрабатываем ошибку от VK API
 			console.error('Ошибка VK API:', data.error)
 			return NextResponse.json({ error: data.error.error_msg }, { status: 500 })
 		}
 
-		if (!data.response) {
-			console.error('Ошибка VK API: response отсутствует')
-			return NextResponse.json(
-				{ error: 'Invalid response from VK API' },
-				{ status: 500 }
-			)
-		}
-
-		// Обрабатываем сообщения
+		// Обработка данных
 		const messages = data.response.items.map(item => {
 			const message = item.last_message
 			const user = data.response.profiles.find(p => p.id === message.from_id)
