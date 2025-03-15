@@ -5,7 +5,6 @@ const VK_AUTH = () => {
 	const containerRef = useRef(null)
 
 	useEffect(() => {
-		// Загружаем скрипт динамически
 		const script = document.createElement('script')
 		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
 		script.async = true
@@ -27,7 +26,7 @@ const VK_AUTH = () => {
 					redirectUrl: 'https://www.unimessage.ru/vk-callback', // Ваш redirectUrl
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
-					scope: 'message', // Укажите необходимые разрешения, если нужно
+					scope: 'messages', // Укажите необходимые разрешения
 				})
 
 				// Создаем экземпляр One Tap
@@ -41,45 +40,34 @@ const VK_AUTH = () => {
 							showAlternativeLogin: true,
 						})
 						.on(WidgetEvents.ERROR, vkidOnError)
-						.on(OneTapInternalEvents.LOGIN_SUCCESS, payload => {
+						.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
 							const { code, device_id } = payload
 
-							// // Обмен кода на токен
-							// Auth.exchangeCode(code, device_id)
-							// 	.then(vkidOnSuccess)
-							// 	.catch(vkidOnError)
-
-							Auth.exchangeCode(code, device_id)
-								.then(data => {
-									console.log('Токен получен:', data)
-
-									// Сохраняем токен в localStorage
-									localStorage.setItem('vk_token', data.access_token)
-
-									// Перенаправляем пользователя на  страницу сообщений
-									window.location.href = '/message'
+							try {
+								// Отправляем код на сервер для обмена на токен
+								const response = await fetch('/api/vk/exchange-code', {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									body: JSON.stringify({ code, device_id }),
 								})
-								.catch(error => {
-									console.error('Ошибка при обмене кода на токен:', error)
-								})
+
+								if (!response.ok) {
+									throw new Error('Ошибка при обмене кода на токен')
+								}
+
+								const data = await response.json()
+
+								// Сохраняем токен в localStorage
+								localStorage.setItem('vk_token', data.access_token)
+
+								// Перенаправляем пользователя на страницу сообщений
+								window.location.href = '/message'
+							} catch (error) {
+								console.error('Ошибка:', error)
+							}
 						})
-				}
-
-				// Функция для обработки успешной авторизации
-				function vkidOnSuccess(data) {
-					// console.log('Успешная авторизация:', data)
-					// Здесь можно отправить данные на ваш сервер для создания сессии
-					// fetch('/api/auth/vk', {
-					// 	method: 'POST',
-					// 	headers: {
-					// 		'Content-Type': 'application/json',
-					// 	},
-					// 	body: JSON.stringify(data),
-					// })
-					// 	.then(response => response.json())
-					// 	.then(result => {
-					// 		console.log('Ответ сервера:', result)
-					// 	})
 				}
 
 				// Функция для обработки ошибок
