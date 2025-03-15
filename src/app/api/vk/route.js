@@ -1,5 +1,7 @@
-export default async function handler(req, res) {
-	const { access_token } = req.body
+import { NextResponse } from 'next/server'
+
+export async function POST(request) {
+	const { access_token } = await request.json()
 
 	try {
 		const response = await fetch(
@@ -17,9 +19,12 @@ export default async function handler(req, res) {
 		)
 
 		const data = await response.json()
-		res.status(200).json(data) // Возвращаем данные клиенту
+		return NextResponse.json(data) // Возвращаем данные клиенту
 	} catch (error) {
 		console.error('Ошибка при запросе диалогов:', error)
-		res.status(500).json({ error: 'Internal Server Error' })
+		return NextResponse.json(
+			{ error: 'Internal Server Error' },
+			{ status: 500 }
+		)
 	}
 }
