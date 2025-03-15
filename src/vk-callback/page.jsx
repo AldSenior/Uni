@@ -1,7 +1,9 @@
+import VK_AUTH from '@/components/vk_auth'
 export default VK_CALLBACK = () => {
 	return (
 		<>
-			<p>Тест</p>
+			<p>Проверка</p>
+			<VK_AUTH />
 		</>
 	)
 }
