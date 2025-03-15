@@ -13,16 +13,12 @@ export async function POST(request) {
 
 	try {
 		const response = await fetch(
-			'https://api.vk.com/method/messages.getConversations',
+			`https://api.vk.com/method/messages.getConversations?access_token=${access_token}&v=5.131`,
 			{
-				method: 'POST',
+				method: 'POST', // или 'GET', так как параметры передаются в URL
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({
-					access_token,
-					// v: '5.131',
-				}),
 			}
 		)
 
