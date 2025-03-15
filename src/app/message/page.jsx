@@ -37,11 +37,13 @@ const MessagesPage = () => {
 
 		loadConversations()
 	}, [])
+	console.log(conversations)
+
 	return (
 		<div>
 			<h1>Мои диалоги</h1>
 			<ul>
-				{messages.map((msg, i) => (
+				{/* {messages.map((msg, i) => (
 					<li key={i}>
 						<p>
 							<strong>{msg.from}</strong> ({msg.date})
@@ -49,8 +51,8 @@ const MessagesPage = () => {
 						<p>
 							{msg.text} {msg.attachments}
 						</p>
-					</li>
-				))}
+					</li> */}
+				{/* ))} */}
 			</ul>
 		</div>
 	)
