@@ -5,6 +5,7 @@ const MessagesPage = () => {
 	const [conversations, setConversations] = useState([])
 	const fetchConversations = async () => {
 		const token = localStorage.getItem('vk_token')
+		console.log(token)
 
 		if (token) {
 			try {
