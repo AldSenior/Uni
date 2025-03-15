@@ -22,8 +22,6 @@ export async function POST(request) {
 				body: JSON.stringify({
 					access_token,
 					v: '5.131',
-					count: 20,
-					extended: 1,
 				}),
 			}
 		)
