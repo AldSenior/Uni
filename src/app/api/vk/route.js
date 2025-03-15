@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-	const { access_token } = await request.json() // Получаем токен из тела запроса
+	const { access_token } = await request.json()
 
 	if (!access_token) {
 		return NextResponse.json(
@@ -12,7 +12,6 @@ export async function POST(request) {
 	}
 
 	try {
-		// Выполняем запрос к VK API
 		const response = await fetch(
 			'https://api.vk.com/method/messages.getConversations',
 			{
@@ -21,15 +20,32 @@ export async function POST(request) {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					access_token, // Передаём токен
+					access_token,
 					v: '5.131',
-					count: 20, // Количество диалогов
-					extended: 1, // Чтобы получить информацию о пользователях
+					count: 20,
+					extended: 1,
 				}),
 			}
 		)
 
-		const data = await response.json()
+		const rawResponse = await response.text() // Логируем сырой ответ
+		console.log('Raw response:', rawResponse)
+
+		const data = JSON.parse(rawResponse)
+
+		if (data.error) {
+			// Обрабатываем ошибку от VK API
+			console.error('Ошибка VK API:', data.error)
+			return NextResponse.json({ error: data.error.error_msg }, { status: 500 })
+		}
+
+		if (!data.response) {
+			console.error('Ошибка VK API: response отсутствует')
+			return NextResponse.json(
+				{ error: 'Invalid response from VK API' },
+				{ status: 500 }
+			)
+		}
 
 		// Обрабатываем сообщения
 		const messages = data.response.items.map(item => {
@@ -48,7 +64,6 @@ export async function POST(request) {
 			}
 		})
 
-		// Возвращаем данные клиенту
 		return NextResponse.json(messages)
 	} catch (error) {
 		console.error('Ошибка при запросе диалогов:', error)

@@ -3,9 +3,8 @@ import { useEffect, useState } from 'react'
 
 const MessagesPage = () => {
 	const [conversations, setConversations] = useState([])
-
 	const fetchConversations = async () => {
-		const token = localStorage.getItem('vk_token') // Получаем токен из localStorage
+		const token = localStorage.getItem('vk_token')
 
 		if (token) {
 			try {
@@ -14,12 +13,12 @@ const MessagesPage = () => {
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify({ access_token: token }), // Передаём токен в API-роут
+					body: JSON.stringify({ access_token: token }),
 				})
 
 				const data = await response.json()
 				console.log('Диалоги:', data)
-				return data.response.items // Возвращаем список диалогов
+				return data // Возвращаем список сообщений
 			} catch (error) {
 				console.error('Ошибка при запросе диалогов:', error)
 				return []
