@@ -24,7 +24,7 @@ const VK_AUTH = () => {
 				// Инициализация VKID SDK
 				Config.init({
 					app: 53263292, // Ваш app_id
-					redirectUrl: 'https://unimessage.ru/vk-callback', // Ваш redirectUrl
+					redirectUrl: 'https://www.unimessage.ru/vk-callback', // Ваш redirectUrl
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
 					scope: '', // Укажите необходимые разрешения, если нужно
