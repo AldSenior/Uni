@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
-
+//sad
 const VK_AUTH = () => {
 	const containerRef = useRef(null)
 
