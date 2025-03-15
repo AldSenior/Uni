@@ -1,80 +1,88 @@
-'use client' // Указываем, что это клиентский компонент
+'use client'
 import React, { useEffect } from 'react'
 
-// Типы для данных авторизации VKID
-interface VKIDSuccessData {
-	access_token: string
-	expires_in: number
-	user_id: number
-	email?: string
-}
-
-interface VKIDError {
-	error: string
-	error_description: string
-}
-
-interface VKIDPayload {
-	code: string
-	device_id: string
-}
-
-export const VK_AUTH: React.FC = () => {
-	const handleVKIDSuccess = (data: VKIDSuccessData) => {
-		console.log('Успешная авторизация:', data)
-	}
-
-	const handleVKIDError = (error: VKIDError) => {
-		console.error('Ошибка авторизации:', error)
-	}
-
+const VKOneTap: React.FC = () => {
 	useEffect(() => {
-		// Загружаем скрипт динамически
-		const script = document.createElement('script')
-		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
-		script.async = true
-		script.onload = () => {
-			if ('VKIDSDK' in window) {
-				const VKID = (window as any).VKIDSDK
-
-				VKID.Config.init({
-					app: 53263292,
-					redirectUrl: 'https://unimessage.ru/vk-callback',
-					responseMode: VKID.ConfigResponseMode.Callback,
-					source: VKID.ConfigSource.LOWCODE,
-					scope: '', // Заполните нужными доступами по необходимости
-				})
-
-				const oneTap = new VKID.OneTap()
-
-				oneTap
-					.render({
-						container: document.getElementById('vkid-container'), // Контейнер для виджета
-						showAlternativeLogin: true,
-					})
-					.on(VKID.WidgetEvents.ERROR, handleVKIDError)
-					.on(
-						VKID.OneTapInternalEvents.LOGIN_SUCCESS,
-						(payload: VKIDPayload) => {
-							const { code, device_id } = payload
-							VKID.Auth.exchangeCode(code, device_id)
-								.then(handleVKIDSuccess)
-								.catch(handleVKIDError)
-						}
-					)
-			}
+		// Проверяем, что VKIDSDK доступен в window
+		if (!window.VKIDSDK) {
+			console.error('VKID SDK не загружен')
+			return
 		}
-		document.body.appendChild(script)
 
+		const { Config, OneTap, Auth, WidgetEvents, OneTapInternalEvents } =
+			window.VKIDSDK
+
+		// Инициализация VKID SDK
+		Config.init({
+			app: 53263292, // Ваш app_id
+			redirectUrl: 'https://unimessage.ru/vk-callback', // Ваш redirectUrl
+			// responseMode: Config.ResponseMode.Callback,
+			// source: Config.Source.LOWCODE,
+			scope: '', // Укажите необходимые разрешения, если нужно
+		})
+
+		// Создаем экземпляр One Tap
+		const oneTap = new OneTap()
+
+		// Рендерим One Tap в контейнер
+		oneTap
+			.render({
+				container: document.getElementById(
+					'vkid-one-tap-container'
+				) as HTMLElement, // Контейнер для One Tap
+				showAlternativeLogin: true, // Показывать альтернативные способы входа
+			})
+			.on(WidgetEvents.ERROR, vkidOnError) // Обработка ошибок
+			.on(
+				OneTapInternalEvents.LOGIN_SUCCESS,
+				(payload: { code: string; device_id: string }) => {
+					// Обработка успешной авторизации
+					const { code, device_id } = payload
+
+					// Обмен кода на токен
+					Auth.exchangeCode(code, device_id)
+						.then(vkidOnSuccess)
+						.catch(vkidOnError)
+				}
+			)
+
+		// Функция для обработки успешной авторизации
+		function vkidOnSuccess(data: {
+			access_token: string
+			user_id: number
+			expires_in: number
+		}) {
+			console.log('Успешная авторизация:', data)
+			// Здесь можно отправить данные на ваш сервер для создания сессии
+			fetch('/api/auth/vk', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(data),
+			})
+				.then(response => response.json())
+				.then(result => {
+					console.log('Ответ сервера:', result)
+				})
+		}
+
+		// Функция для обработки ошибок
+		function vkidOnError(error: unknown) {
+			console.error('Ошибка авторизации:', error)
+		}
+
+		// Очистка при размонтировании компонента
 		return () => {
-			// Очистка при размонтировании компонента
-			document.body.removeChild(script)
+			oneTap.destroy()
 		}
 	}, [])
 
 	return (
 		<div>
-			<div id='vkid-container'></div> {/* Контейнер для виджета VKID */}
+			<div id='vkid-one-tap-container'></div>
 		</div>
 	)
 }
+
+export default VKOneTap

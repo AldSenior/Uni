@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 24, "column": 0}, "map": {"version":3,"sources":["file:///home/arthur/Desktop/Kyrsach/frontend/unimessage/src/app/page.tsx"],"sourcesContent":["import { Head, Html, Main, NextScript } from 'next/document'\n\nexport default function Document() {\n\treturn (\n\t\t<Html>\n\t\t\t<Head>\n\t\t\t\t<script src='https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js' />\n\t\t\t</Head>\n\t\t\t<body>\n\t\t\t\t<Main />\n\t\t\t\t<NextScript />\n\t\t\t</body>\n\t\t</Html>\n\t)\n}\n"],"names":[],"mappings":";;;;AAAA;;;AAEe,SAAS;IACvB,qBACC,8OAAC,gIAAA,CAAA,OAAI;;0BACJ,8OAAC,gIAAA,CAAA,OAAI;0BACJ,cAAA,8OAAC;oBAAO,KAAI;;;;;;;;;;;0BAEb,8OAAC;;kCACA,8OAAC,gIAAA,CAAA,OAAI;;;;;kCACL,8OAAC,gIAAA,CAAA,aAAU;;;;;;;;;;;;;;;;;AAIf","debugId":null}}]
+}
