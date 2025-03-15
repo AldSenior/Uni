@@ -27,7 +27,7 @@ const VK_AUTH = () => {
 					redirectUrl: 'https://www.unimessage.ru/vk-callback', // Ваш redirectUrl
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
-					scope: '', // Укажите необходимые разрешения, если нужно
+					scope: 'message', // Укажите необходимые разрешения, если нужно
 				})
 
 				// Создаем экземпляр One Tap
@@ -44,10 +44,24 @@ const VK_AUTH = () => {
 						.on(OneTapInternalEvents.LOGIN_SUCCESS, payload => {
 							const { code, device_id } = payload
 
-							// Обмен кода на токен
+							// // Обмен кода на токен
+							// Auth.exchangeCode(code, device_id)
+							// 	.then(vkidOnSuccess)
+							// 	.catch(vkidOnError)
+
 							Auth.exchangeCode(code, device_id)
-								.then(vkidOnSuccess)
-								.catch(vkidOnError)
+								.then(data => {
+									console.log('Токен получен:', data)
+
+									// Сохраняем токен в localStorage
+									localStorage.setItem('vk_token', data.access_token)
+
+									// Перенаправляем пользователя на  страницу сообщений
+									window.location.href = '/message'
+								})
+								.catch(error => {
+									console.error('Ошибка при обмене кода на токен:', error)
+								})
 						})
 				}
 
