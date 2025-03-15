@@ -2,7 +2,6 @@ export default async function handler(req, res) {
 	const { access_token } = req.body
 
 	try {
-		// Выполняем запрос к VK API
 		const response = await fetch(
 			'https://api.vk.com/method/messages.getConversations',
 			{
@@ -12,7 +11,7 @@ export default async function handler(req, res) {
 				},
 				body: JSON.stringify({
 					access_token,
-					v: '5.131', // Версия API
+					v: '5.131',
 				}),
 			}
 		)

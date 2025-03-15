@@ -5,24 +5,28 @@ const MessagesPage = () => {
 	const [conversations, setConversations] = useState([])
 
 	const fetchConversations = async () => {
-		const token = localStorage.getItem('vk_token') // Получаем токен из localStorage
+		const token = localStorage.getItem('vk_token')
 
 		if (token) {
 			try {
-				// Выполняем запрос к вашему API-роуту
 				const response = await fetch('/api/vk/conversations', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify({ access_token: token }), // Передаём токен
+					body: JSON.stringify({ access_token: token }),
 				})
 
-				const data = await response.json() // Парсим ответ
+				// Логируем ответ сервера
+				const rawResponse = await response.text()
+				console.log('Raw response:', rawResponse)
+
+				// Парсим JSON
+				const data = JSON.parse(rawResponse)
 				console.log('Диалоги:', data)
 
 				if (data.response) {
-					return data.response.items // Возвращаем список диалогов
+					return data.response.items
 				} else {
 					console.error('Ошибка в ответе VK API:', data)
 					return []
