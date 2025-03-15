@@ -7,7 +7,6 @@ const VK_AUTH = () => {
 	useEffect(() => {
 		const script = document.createElement('script')
 		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
-		script.type = 'text/javascript'
 		script.async = true
 		script.onload = () => {
 			if ('VKIDSDK' in window) {
