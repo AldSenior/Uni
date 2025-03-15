@@ -45,21 +45,21 @@ const VK_AUTH = () => {
 				}
 
 				// Функция для обработки успешной авторизации
-				// function vkidOnSuccess(data) {
-				// 	console.log('Успешная авторизация:', data)
-				// 	// Здесь можно отправить данные на ваш сервер для создания сессии
-				// 	fetch('/api/auth/vk', {
-				// 		method: 'POST',
-				// 		headers: {
-				// 			'Content-Type': 'application/json',
-				// 		},
-				// 		body: JSON.stringify(data),
-				// 	})
-				// 		.then(response => response.json())
-				// 		.then(result => {
-				// 			console.log('Ответ сервера:', result)
-				// 		})
-				// }
+				function vkidOnSuccess(data) {
+					console.log('Успешная авторизация:', data)
+					// Здесь можно отправить данные на ваш сервер для создания сессии
+					// fetch('/api/auth/vk', {
+					// 	method: 'POST',
+					// 	headers: {
+					// 		'Content-Type': 'application/json',
+					// 	},
+					// 	body: JSON.stringify(data),
+					// })
+					// 	.then(response => response.json())
+					// 	.then(result => {
+					// 		console.log('Ответ сервера:', result)
+					// 	})
+				}
 
 				// Функция для обработки ошибок
 				function vkidOnError(error) {
