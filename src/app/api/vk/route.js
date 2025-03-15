@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-export async function POST(request: Request) {
+export async function POST(request) {
 	const { access_token } = await request.json()
 
 	if (!access_token) {
