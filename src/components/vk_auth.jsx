@@ -18,8 +18,8 @@ const VK_AUTH = () => {
 				Config.init({
 					app: 53263292, // Ваш app_id
 					redirectUrl: 'https://unimessage.ru/vk-callback', // Ваш redirectUrl
-					// responseMode: Config.ResponseMode.Callback,
-					// source: Config.Source.LOWCODE,
+					responseMode: Config.ResponseMode.Callback,
+					source: Config.Source.LOWCODE,
 					scope: '', // Укажите необходимые разрешения, если нужно
 				})
 
