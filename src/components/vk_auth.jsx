@@ -11,15 +11,22 @@ const VK_AUTH = () => {
 		script.async = true
 		script.onload = () => {
 			if ('VKIDSDK' in window) {
-				const { Config, OneTap, Auth, WidgetEvents, OneTapInternalEvents } =
-					window.VKIDSDK
+				const {
+					Config,
+					OneTap,
+					Auth,
+					WidgetEvents,
+					OneTapInternalEvents,
+					ConfigResponseMode,
+					ConfigSource,
+				} = window.VKIDSDK
 
 				// Инициализация VKID SDK
 				Config.init({
 					app: 53263292, // Ваш app_id
 					redirectUrl: 'https://unimessage.ru/vk-callback', // Ваш redirectUrl
-					responseMode: Config.ResponseMode.Callback,
-					source: Config.Source.LOWCODE,
+					responseMode: ConfigResponseMode.Callback,
+					source: ConfigSource.LOWCODE,
 					scope: '', // Укажите необходимые разрешения, если нужно
 				})
 
