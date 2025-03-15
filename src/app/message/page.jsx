@@ -9,7 +9,7 @@ const MessagesPage = () => {
 		if (!token) return
 
 		try {
-			const response = await fetch('/api/vk/conversations', {
+			const response = await fetch('/api/vk', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ access_token: token }),
