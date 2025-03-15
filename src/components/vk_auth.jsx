@@ -20,7 +20,6 @@ const VK_AUTH = () => {
 					ConfigResponseMode,
 				} = window.VKIDSDK
 
-				// 2. Исправляем параметры инициализации
 				Config.init({
 					app: 53263292,
 					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
