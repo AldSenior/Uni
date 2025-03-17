@@ -20,13 +20,11 @@ const VK_AUTH = () => {
 
 				// Конфигурация SDK
 				Config.init({
-					app: process.env.NEXT_PUBLIC_VK_CLIENT_ID || 53263292,
-					redirectUrl:
-						process.env.NEXT_PUBLIC_VK_REDIRECT_URI ||
-						'https://www.unimessage.ru/api/vk/exchange-code',
+					app: 53263292, // Ваш app_id
+					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
 					responseMode: ConfigResponseMode.Callback,
-					source: ConfigSource.LOWCODE, // Исправлено на верный регистр
-					scope: 'email messages', // Исправлен формат scope
+					source: ConfigSource.LowCode,
+					scope: 'email, messages',
 				})
 
 				const oneTap = new OneTap()
@@ -38,10 +36,10 @@ const VK_AUTH = () => {
 							showAlternativeLogin: true,
 						})
 						.on(WidgetEvents.ERROR, error => {
-							console.error('Ошибка виджета:', error)
-							alert(`Ошибка авторизации: ${error.error_description}`)
+							console.error('Widget error:', error)
+							alert(`Auth error: ${error.error_description}`)
 						})
-						.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
+						.on(OneTapInternalEvents.LoginSuccess, async payload => {
 							try {
 								const response = await fetch('/api/vk/exchange-code', {
 									method: 'POST',
@@ -53,25 +51,22 @@ const VK_AUTH = () => {
 
 								if (!response.ok) {
 									const errorData = await response.json()
-									throw new Error(errorData.error || 'Ошибка сервера')
+									throw new Error(errorData.error || 'Auth failed')
 								}
 
 								const { access_token, user_id } = await response.json()
 
 								// Безопасное хранение токена
 								sessionStorage.setItem('vk_token', access_token)
-
-								// Перенаправление с очисткой истории
-								window.location.replace('/message')
+								window.location.href = '/message'
 							} catch (error) {
-								console.error('Ошибка авторизации:', error)
-								alert(error.message || 'Произошла ошибка при авторизации')
+								console.error('Auth error:', error)
+								alert(error.message)
 							}
 						})
 				}
 			} catch (error) {
-				console.error('Ошибка загрузки VK SDK:', error)
-				alert('Не удалось загрузить модуль авторизации')
+				console.error('Failed to load VK SDK:', error)
 			}
 		}
 
