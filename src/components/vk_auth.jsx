@@ -85,18 +85,21 @@
 // 	)
 // }
 
-// export default VK_AUTH
-'use client'
-import { useEffect, useRef } from 'react'
+// export default VK_AUTH'use client'
+import { useEffect, useRef, useState } from 'react'
 
 const VK_AUTH = () => {
 	const containerRef = useRef(null)
+	const [error, setError] = useState(null)
+
 	useEffect(() => {
-		const script = document.createElement('script')
-		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
-		script.async = true
-		script.onload = () => {
-			if ('VKIDSDK' in window) {
+		const initVKSDK = async () => {
+			try {
+				// Динамическая загрузка SDK
+				await loadScript(
+					'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
+				)
+
 				const {
 					Config,
 					OneTap,
@@ -106,12 +109,13 @@ const VK_AUTH = () => {
 					ConfigResponseMode,
 				} = window.VKIDSDK
 
+				// Конфигурация SDK
 				Config.init({
 					app: 53263292,
-					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
+					redirectUrl: `${window.location.origin}/api/vk/exchange-code`,
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
-					scope: 'messages', // Исправлено с message на messages
+					scope: 'messages',
 				})
 
 				const oneTap = new OneTap()
@@ -123,64 +127,76 @@ const VK_AUTH = () => {
 							showAlternativeLogin: true,
 						})
 						.on(WidgetEvents.ERROR, error => {
-							console.error('Ошибка виджета:', error)
-							alert(`Ошибка авторизации: ${error.error_description}`)
+							console.error('Widget error:', error)
+							setError(error.error_description)
 						})
 						.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
 							try {
-								console.log('Получен код авторизации:', payload.code)
-
-								// 3. Добавляем обработку ошибок сервера
 								const response = await fetch('/api/vk/exchange-code', {
 									method: 'POST',
 									headers: {
 										'Content-Type': 'application/json',
+										'X-Requested-With': 'XMLHttpRequest',
 									},
 									body: JSON.stringify({ code: payload.code }),
+									credentials: 'include',
 								})
 
-								const responseData = await response.json()
+								const data = await response.json()
 
-								if (!response.ok) {
-									throw new Error(
-										responseData.error || 'Неизвестная ошибка сервера'
-									)
-								}
+								if (!response.ok) throw new Error(data.error || 'Server error')
+								if (!data.access_token) throw new Error('Missing access token')
 
-								// 4. Проверяем наличие токена
-								if (!responseData.access_token) {
-									throw new Error('Токен не был получен')
-								}
-
-								console.log('Успешно получен токен:', responseData)
-								localStorage.setItem('vk_token', responseData.access_token)
-								window.location.href = '/message'
-							} catch (error) {
-								console.error('Ошибка авторизации:', error)
-								alert(`Ошибка авторизации: ${error.message}`)
+								// Безопасное хранение токена
+								sessionStorage.setItem('vk_token', data.access_token)
+								window.location.replace('/message')
+							} catch (err) {
+								console.error('Auth error:', err)
+								setError(err.message)
 							}
 						})
 				}
+			} catch (err) {
+				console.error('SDK initialization error:', err)
+				setError('Failed to initialize authentication')
 			}
 		}
 
-		document.body.appendChild(script)
+		const loadScript = src =>
+			new Promise((resolve, reject) => {
+				const script = document.createElement('script')
+				script.src = src
+				script.async = true
+				script.onload = resolve
+				script.onerror = reject
+				document.body.appendChild(script)
+			})
+
+		initVKSDK()
 
 		return () => {
-			document.body.removeChild(script)
+			const scripts = document.querySelectorAll('script[src*="vkid/sdk"]')
+			scripts.forEach(script => script.remove())
 		}
 	}, [])
 
 	return (
-		<div
-			ref={containerRef}
-			style={{
-				minHeight: '46px',
-				display: 'flex',
-				justifyContent: 'center',
-				margin: '20px 0',
-			}}
-		></div>
+		<div>
+			<div
+				ref={containerRef}
+				style={{
+					minHeight: '46px',
+					display: 'flex',
+					justifyContent: 'center',
+					margin: '20px 0',
+				}}
+			/>
+			{error && (
+				<div className='error-message'>
+					{error} <button onClick={() => setError(null)}>×</button>
+				</div>
+			)}
+		</div>
 	)
 }
 
