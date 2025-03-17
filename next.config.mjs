@@ -1,3 +1,4 @@
+// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	async headers() {
@@ -5,37 +6,31 @@ const nextConfig = {
 			{
 				source: '/:path*',
 				headers: [
-					// Решаем проблему CORS для VK API
-					{
-						key: 'Access-Control-Allow-Origin',
-						value: 'https://id.vk.com https://www.unimessage.ru',
-					},
-					{
-						key: 'Access-Control-Allow-Methods',
-						value: 'GET,POST,PUT,DELETE,OPTIONS',
-					},
-					{
-						key: 'Access-Control-Allow-Headers',
-						value: 'Content-Type, Authorization',
-					},
-
-					// Исправляем CSP ошибки
+					// CSP для VK ID
 					{
 						key: 'Content-Security-Policy',
 						value: [
+							// Базовые директивы
 							"default-src 'self'",
+
+							// Для VK ID SDK
+							"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://id.vk.com https://vk.com",
+							"style-src 'self' 'unsafe-inline' https://id.vk.com",
 							"connect-src 'self' https://id.vk.com https://api.vk.com",
 							'frame-src https://id.vk.com',
-							"frame-ancestors 'self' https://vk.com https://*.vk.com https://vk.ru",
-							"font-src 'self' data:",
+							"img-src 'self' data: https://*.vk.com",
 						].join('; '),
+					},
+					// CORS headers
+					{
+						key: 'Access-Control-Allow-Origin',
+						value: 'https://www.unimessage.ru',
 					},
 				],
 			},
 		]
 	},
-
-	// Решаем проблему с предзагрузкой шрифтов
+	// Отключаем предзагрузку шрифтов
 	optimizeFonts: false,
 }
 
