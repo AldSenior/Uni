@@ -86,6 +86,7 @@
 // }
 
 // export default VK_AUTH'use client'
+'use client'
 import { useEffect, useRef, useState } from 'react'
 
 const VK_AUTH = () => {
