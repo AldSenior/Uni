@@ -23,7 +23,7 @@ const VK_AUTH = () => {
 					app: 53263292, // Ваш app_id
 					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
 					responseMode: ConfigResponseMode.Callback,
-					source: ConfigSource.LowCode,
+					source: ConfigSource.LOWCODE,
 					scope: 'email, messages',
 				})
 
