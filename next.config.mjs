@@ -15,22 +15,27 @@ const nextConfig = {
 							"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://id.vk.com https://login.vk.com https://vk.com",
 							"style-src 'self' 'unsafe-inline' https://id.vk.com https://vk.com",
 							"connect-src 'self' https://id.vk.com https://api.vk.com https://login.vk.com",
+							"img-src 'self' data: https://*.vk.com https://*.vk-user-content.com",
+							"font-src 'self' data:",
+
+							// Директивы для фреймов
 							'frame-src https://id.vk.com https://login.vk.com https://www.unimessage.ru/vk-callback',
 							"frame-ancestors 'self' https://vk.com https://*.vk.com https://vk.ru https://*.vk.ru https://web.vk.me",
-							"img-src 'self' data: https://*.vk.com https://*.vk-user-content.com",
-
-							// Для шрифтов
-							"font-src 'self' data:",
 
 							// Дополнительные настройки
 							"manifest-src 'self'",
 							"form-action 'self'",
-						].join('; '),
+						]
+							.join('; ')
+							.replace(/\s+/g, ' '), // Удаляем лишние пробелы
 					},
-					// CORS headers (для вашего сервера)
+					// CORS headers
 					{
 						key: 'Access-Control-Allow-Origin',
-						value: 'https://www.unimessage.ru',
+						value:
+							process.env.NODE_ENV === 'development'
+								? 'http://localhost:3000'
+								: 'https://www.unimessage.ru',
 					},
 					{
 						key: 'Access-Control-Allow-Methods',
