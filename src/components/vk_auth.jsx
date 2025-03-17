@@ -3,7 +3,9 @@ import { useEffect, useRef } from 'react'
 
 const VK_AUTH = () => {
 	const containerRef = useRef(null)
+
 	useEffect(() => {
+		// Загружаем скрипт динамически
 		const script = document.createElement('script')
 		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
 		script.async = true
@@ -12,89 +14,90 @@ const VK_AUTH = () => {
 				const {
 					Config,
 					OneTap,
+					Auth,
 					WidgetEvents,
 					OneTapInternalEvents,
-					ConfigSource,
 					ConfigResponseMode,
+					ConfigSource,
 				} = window.VKIDSDK
 
+				// Инициализация VKID SDK
 				Config.init({
-					app: 53263292,
-					redirectUrl: 'https://www.unimessage.ru/api/vk/exchange-code',
+					app: 53263292, // Ваш app_id
+					redirectUrl: 'https://www.unimessage.ru/vk-callback', // Ваш redirectUrl
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
-					scope: 'messages', // Исправлено с message на messages
+					scope: 'message', // Укажите необходимые разрешения, если нужно
 				})
 
+				// Создаем экземпляр One Tap
 				const oneTap = new OneTap()
 
+				// Рендерим One Tap в контейнер
 				if (containerRef.current) {
 					oneTap
 						.render({
 							container: containerRef.current,
 							showAlternativeLogin: true,
 						})
-						.on(WidgetEvents.ERROR, error => {
-							console.error('Ошибка виджета:', error)
-							alert(`Ошибка авторизации: ${error.error_description}`)
-						})
-						.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
-							try {
-								console.log('Получен код авторизации:', payload.code)
+						.on(WidgetEvents.ERROR, vkidOnError)
+						.on(OneTapInternalEvents.LOGIN_SUCCESS, payload => {
+							const { code, device_id } = payload
 
-								// 3. Добавляем обработку ошибок сервера
-								const response = await fetch('/api/vk/exchange-code', {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'application/json',
-									},
-									body: JSON.stringify({ code: payload.code }),
+							// // Обмен кода на токен
+							// Auth.exchangeCode(code, device_id)
+							// 	.then(vkidOnSuccess)
+							// 	.catch(vkidOnError)
+
+							Auth.exchangeCode(code, device_id)
+								.then(data => {
+									console.log('Токен получен:', data)
+
+									// Сохраняем токен в localStorage
+									localStorage.setItem('vk_token', data.access_token)
+
+									// Перенаправляем пользователя на  страницу сообщений
+									window.location.href = '/message'
 								})
-
-								const responseData = await response.json()
-
-								if (!response.ok) {
-									throw new Error(
-										responseData.error || 'Неизвестная ошибка сервера'
-									)
-								}
-
-								// 4. Проверяем наличие токена
-								if (!responseData.access_token) {
-									throw new Error('Токен не был получен')
-								}
-
-								console.log('Успешно получен токен:', responseData)
-								localStorage.setItem('vk_token', responseData.access_token)
-								window.location.href = '/message'
-							} catch (error) {
-								console.error('Ошибка авторизации:', error)
-								alert(`Ошибка авторизации: ${error.message}`)
-							}
+								.catch(error => {
+									console.error('Ошибка при обмене кода на токен:', error)
+								})
 						})
+				}
+
+				// Функция для обработки успешной авторизации
+				function vkidOnSuccess(data) {
+					console.log('Успешная авторизация:', data)
+					Здесь можно отправить данные на ваш сервер для создания сессии
+					fetch('/api/auth/vk', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(data),
+					})
+						.then(response => response.json())
+						.then(result => {
+							console.log('Ответ сервера:', result)
+						})
+				}
+
+				// Функция для обработки ошибок
+				function vkidOnError(error) {
+					console.error('Ошибка авторизации:', error)
 				}
 			}
 		}
 
 		document.body.appendChild(script)
 
+		// Очистка при размонтировании компонента
 		return () => {
 			document.body.removeChild(script)
 		}
 	}, [])
 
-	return (
-		<div
-			ref={containerRef}
-			style={{
-				minHeight: '46px',
-				display: 'flex',
-				justifyContent: 'center',
-				margin: '20px 0',
-			}}
-		></div>
-	)
+	return <div ref={containerRef}></div>
 }
 
 export default VK_AUTH
-//
