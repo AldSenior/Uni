@@ -4,7 +4,15 @@ import { NextResponse } from 'next/server'
 export async function POST(request) {
 	try {
 		const { code } = await request.json()
+		const clientId = process.env.VK_CLIENT_ID
+		const clientSecret = process.env.VK_CLIENT_SECRET
 
+		if (!clientId || !clientSecret) {
+			return NextResponse.json(
+				{ error: 'VK_CLIENT_ID или VK_CLIENT_SECRET не заданы' },
+				{ status: 500 }
+			)
+		}
 		if (!code) {
 			return NextResponse.json(
 				{ error: 'Authorization code is required' },

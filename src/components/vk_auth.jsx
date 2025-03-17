@@ -39,7 +39,7 @@ const VK_AUTH = () => {
 							console.error('Widget error:', error)
 							alert(`Auth error: ${error.error_description}`)
 						})
-						.on(OneTapInternalEvents.LoginSuccess, async payload => {
+						.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
 							try {
 								const response = await fetch('/api/vk/exchange-code', {
 									method: 'POST',
