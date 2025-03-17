@@ -14,6 +14,7 @@ const MessagesPage = () => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ access_token: token }),
 			})
+			console.log(token)
 
 			const data = await response.json()
 			setConversations(data)
@@ -29,7 +30,7 @@ const MessagesPage = () => {
 	return (
 		<div>
 			<h1>Мои диалоги</h1>
-			<ul>
+			{/* <ul>
 				{conversations.map((msg, i) => (
 					<li key={i}>
 						<p>
@@ -40,7 +41,7 @@ const MessagesPage = () => {
 						</p>
 					</li>
 				))}
-			</ul>
+			</ul> */}
 		</div>
 	)
 }
