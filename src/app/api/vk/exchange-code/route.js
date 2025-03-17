@@ -4,8 +4,8 @@ import { NextResponse } from 'next/server'
 export async function POST(request) {
 	try {
 		const { code } = await request.json()
-		const clientId = process.env.VK_CLIENT_ID
-		const clientSecret = process.env.VK_CLIENT_SECRET
+		const clientId = 53263292
+		const clientSecret = 'xK4loxyZGbRjhC7OjBw2'
 
 		if (!clientId || !clientSecret) {
 			return NextResponse.json(
