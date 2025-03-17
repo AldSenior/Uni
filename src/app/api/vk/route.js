@@ -1,34 +1,38 @@
-// app/api/vk/conversations/route.ts
-import easyvk from 'easyvk'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-	const { access_token } = await request.json() // Получаем токен из тела запроса
-
-	if (!access_token) {
-		return NextResponse.json(
-			{ error: 'Access token is missing' },
-			{ status: 400 }
-		)
-	}
-
 	try {
-		// Инициализация easyvk
-		const vk = await easyvk({
-			access_token, // Передаём токен
-		})
+		const { access_token } = await request.json()
 
-		// Выполняем запрос к VK API
-		const conversations = await vk.call('messages.getConversations', {
-			count: 10, // Количество диалогов
-		})
+		if (!access_token) {
+			return NextResponse.json(
+				{ error: 'Токен доступа отсутствует' },
+				{ status: 401 }
+			)
+		}
 
-		// Возвращаем данные клиенту
-		return NextResponse.json(conversations)
+		const response = await fetch(
+			`https://api.vk.com/method/messages.getConversations?` +
+				new URLSearchParams({
+					access_token: access_token,
+					v: '5.199',
+					count: 20,
+					extended: 1,
+				})
+		)
+
+		const data = await response.json()
+
+		if (data.error) {
+			console.error('VK API Error:', data.error)
+			return NextResponse.json({ error: data.error.error_msg }, { status: 400 })
+		}
+
+		return NextResponse.json(data.response.items)
 	} catch (error) {
-		console.error('Ошибка при запросе диалогов:', error)
+		console.error('Internal Server Error:', error)
 		return NextResponse.json(
-			{ error: 'Internal Server Error' },
+			{ error: 'Ошибка при получении диалогов' },
 			{ status: 500 }
 		)
 	}

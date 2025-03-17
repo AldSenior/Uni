@@ -5,99 +5,89 @@ const VK_AUTH = () => {
 	const containerRef = useRef(null)
 
 	useEffect(() => {
-		// Загружаем скрипт динамически
-		const script = document.createElement('script')
-		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
-		script.async = true
-		script.onload = () => {
-			if ('VKIDSDK' in window) {
-				const {
-					Config,
-					OneTap,
-					Auth,
-					WidgetEvents,
-					OneTapInternalEvents,
-					ConfigResponseMode,
-					ConfigSource,
-				} = window.VKIDSDK
+		const loadVKSDK = async () => {
+			try {
+				const script = document.createElement('script')
+				script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
+				script.async = true
 
-				// Инициализация VKID SDK
-				Config.init({
-					app: 53263292, // Ваш app_id
-					redirectUrl: 'https://www.unimessage.ru/vk-callback', // Ваш redirectUrl
-					responseMode: ConfigResponseMode.Callback,
-					source: ConfigSource.LOWCODE,
-					scope: 'message', // Укажите необходимые разрешения, если нужно
-				})
+				script.onload = () => {
+					if (window.VKIDSDK) {
+						const {
+							Config,
+							OneTap,
+							WidgetEvents,
+							OneTapInternalEvents,
+							ConfigResponseMode,
+							ConfigSource,
+						} = window.VKIDSDK
 
-				// Создаем экземпляр One Tap
-				const oneTap = new OneTap()
-
-				// Рендерим One Tap в контейнер
-				if (containerRef.current) {
-					oneTap
-						.render({
-							container: containerRef.current,
-							showAlternativeLogin: true,
+						Config.init({
+							app: 53263292,
+							redirectUrl: `${window.location.origin}/api/vk/exchange-code`,
+							responseMode: ConfigResponseMode.Callback,
+							source: ConfigSource.Web,
+							scope: 'messages',
 						})
-						.on(WidgetEvents.ERROR, vkidOnError)
-						.on(OneTapInternalEvents.LOGIN_SUCCESS, payload => {
-							const { code, device_id } = payload
 
-							// // Обмен кода на токен
-							// Auth.exchangeCode(code, device_id)
-							// 	.then(vkidOnSuccess)
-							// 	.catch(vkidOnError)
+						const oneTap = new OneTap()
 
-							Auth.exchangeCode(code, device_id)
-								.then(data => {
-									console.log('Токен получен:', data)
-
-									// Сохраняем токен в localStorage
-									localStorage.setItem('vk_token', data.access_token)
-
-									// Перенаправляем пользователя на  страницу сообщений
-									window.location.href = '/message'
+						if (containerRef.current) {
+							oneTap
+								.render({
+									container: containerRef.current,
+									showAlternativeLogin: true,
 								})
-								.catch(error => {
-									console.error('Ошибка при обмене кода на токен:', error)
+								.on(WidgetEvents.ERROR, error => {
+									console.error('VKID Error:', error)
+									alert('Ошибка авторизации через VK')
 								})
-						})
+								.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
+									try {
+										console.log('Получен код авторизации:', payload.code)
+
+										const response = await fetch('/api/vk/exchange-code', {
+											method: 'POST',
+											headers: {
+												'Content-Type': 'application/json',
+											},
+											body: JSON.stringify({
+												code: payload.code,
+												device_id: payload.device_id,
+											}),
+										})
+
+										if (!response.ok) {
+											const error = await response.json()
+											throw new Error(error.message)
+										}
+
+										const { access_token } = await response.json()
+										localStorage.setItem('vk_token', access_token)
+										window.location.href = '/message'
+									} catch (error) {
+										console.error('Auth error:', error)
+										alert(error.message)
+									}
+								})
+						}
+					}
 				}
 
-				// Функция для обработки успешной авторизации
-				function vkidOnSuccess(data) {
-					console.log('Успешная авторизация:', data)
-					// Здесь можно отправить данные на ваш сервер для создания сессии
-					fetch('/api/auth/vk', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify(data),
-					})
-						.then(response => response.json())
-						.then(result => {
-							console.log('Ответ сервера:', result)
-						})
-				}
+				document.body.appendChild(script)
 
-				// Функция для обработки ошибок
-				function vkidOnError(error) {
-					console.error('Ошибка авторизации:', error)
+				return () => {
+					document.body.removeChild(script)
 				}
+			} catch (error) {
+				console.error('Failed to load VK SDK:', error)
 			}
 		}
 
-		document.body.appendChild(script)
-
-		// Очистка при размонтировании компонента
-		return () => {
-			document.body.removeChild(script)
-		}
+		loadVKSDK()
 	}, [])
 
-	return <div ref={containerRef}></div>
+	return <div ref={containerRef} style={{ minHeight: '46px' }} />
 }
 
 export default VK_AUTH
