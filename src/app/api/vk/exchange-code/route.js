@@ -21,9 +21,9 @@ export async function POST(request) {
 		}
 
 		const params = new URLSearchParams({
-			client_id: process.env.VK_CLIENT_ID,
-			client_secret: process.env.VK_CLIENT_SECRET,
-			redirect_uri: process.env.VK_REDIRECT_URI,
+			client_id: 53263292,
+			client_secret: 'xK4loxyZGbRjhC7OjBw2',
+			redirect_uri: 'https://www.unimessage.ru/api/vk/exchange-code',
 			code: code,
 		})
 
