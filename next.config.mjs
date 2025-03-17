@@ -32,10 +32,7 @@ const nextConfig = {
 					// CORS headers
 					{
 						key: 'Access-Control-Allow-Origin',
-						value:
-							process.env.NODE_ENV === 'development'
-								? 'http://localhost:3000'
-								: 'https://www.unimessage.ru',
+						value: 'https://www.unimessage.ru',
 					},
 					{
 						key: 'Access-Control-Allow-Methods',
