@@ -1,10 +1,17 @@
-import Link from 'next/link'
+import { SocialAuth } from 'react-social-auth'
 
-export default function Home() {
-	return (
-		<>
-			<Link href='/vk-callback'>Авторизоваться VK</Link>
-			<p>Домашка ? а</p>
-		</>
-	)
-}
+const Index = () => (
+	<div>
+		<SocialAuth
+			providers={['vk']}
+			onSuccess={profile => {
+				window.localStorage.setItem('vkAccessToken', profile.access_token)
+				window.location.href = '/profile'
+			}}
+		>
+			<button>Войти через VK</button>
+		</SocialAuth>
+	</div>
+)
+
+export default Index

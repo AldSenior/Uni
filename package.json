@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@vkid/sdk": "^2.0.0",
+    "axios": "^1.8.3",
     "easyvk": "^2.8.2",
     "next": "15.2.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-social-auth": "^1.1.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
