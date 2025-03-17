@@ -14,30 +14,23 @@ const nextConfig = {
 							// Для VK ID SDK
 							"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://id.vk.com https://login.vk.com https://vk.com",
 							"style-src 'self' 'unsafe-inline' https://id.vk.com https://vk.com",
-							"connect-src 'self' https://id.vk.com https://api.vk.com https://login.vk.com https://vk.com",
-							'frame-src https://id.vk.com https://login.vk.com https://vk.com https://www.unimessage.ru',
-							"frame-ancestors 'self' https://id.vk.com https://*.vk.com https://vk.ru",
-							"img-src 'self' data: https://*.vk.com https://*.userapi.com",
+							"connect-src 'self' https://id.vk.com https://api.vk.com https://login.vk.com",
+							'frame-src https://id.vk.com https://login.vk.com https://www.unimessage.ru/vk-callback',
+							"frame-ancestors 'self' https://vk.com https://*.vk.com https://vk.ru https://*.vk.ru https://web.vk.me",
+							"img-src 'self' data: https://*.vk.com https://*.vk-user-content.com",
 
-							// Для Next.js и шрифтов
+							// Для шрифтов
 							"font-src 'self' data:",
-							"manifest-src 'self'",
 
-							// Защита от сторонних скриптов
-							"script-src-elem 'self' https://id.vk.com https://login.vk.com",
+							// Дополнительные настройки
+							"manifest-src 'self'",
+							"form-action 'self'",
 						].join('; '),
 					},
+					// CORS headers (для вашего сервера)
 					{
 						key: 'Access-Control-Allow-Origin',
-						value: [
-							'https://id.vk.com',
-							'https://login.vk.com',
-							'https://vk.com',
-							'https://www.unimessage.ru',
-							process.env.NODE_ENV === 'development' && 'http://localhost:3000',
-						]
-							.filter(Boolean)
-							.join(' '),
+						value: 'https://www.unimessage.ru',
 					},
 					{
 						key: 'Access-Control-Allow-Methods',
@@ -54,17 +47,6 @@ const nextConfig = {
 				],
 			},
 		]
-	},
-	experimental: {
-		serverActions: {
-			allowedOrigins: [
-				'id.vk.com',
-				'login.vk.com',
-				'vk.com',
-				'www.unimessage.ru',
-				'localhost:3000',
-			],
-		},
 	},
 }
 
