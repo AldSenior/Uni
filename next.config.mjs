@@ -1,4 +1,19 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+// next.config.js
+const securityHeaders = [
+	{
+		key: 'Content-Security-Policy',
+		value:
+			"frame-ancestors 'self' https://vk.com https://*.vk.com https://vk.ru https://*.vk.ru https://web.vk.me https://*.pages-ac.vk-apps.com;",
+	},
+]
 
-export default nextConfig;
+module.exports = {
+	async headers() {
+		return [
+			{
+				source: '/(.*)',
+				headers: securityHeaders,
+			},
+		]
+	},
+}
