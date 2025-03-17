@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef } from 'react'
-
 const VK_AUTH = () => {
 	const containerRef = useRef(null)
 
@@ -8,7 +7,7 @@ const VK_AUTH = () => {
 		const loadVKSDK = async () => {
 			try {
 				// Динамический импорт SDK
-				const { default: VKID } = await import('@vkid/sdk')
+				const vkid = await import('@vkid/sdk')
 				const {
 					Config,
 					OneTap,
@@ -16,7 +15,7 @@ const VK_AUTH = () => {
 					OneTapInternalEvents,
 					ConfigSource,
 					ConfigResponseMode,
-				} = VKID
+				} = vkid
 
 				// Конфигурация SDK
 				Config.init({
