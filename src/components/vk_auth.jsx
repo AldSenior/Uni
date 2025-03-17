@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 
 const VK_AUTH = () => {
 	const containerRef = useRef(null)
-	//a всм
 	useEffect(() => {
 		const script = document.createElement('script')
 		script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
