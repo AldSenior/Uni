@@ -113,7 +113,7 @@ const VK_AUTH = () => {
 				// Конфигурация SDK
 				Config.init({
 					app: 53263292,
-					redirectUrl: `${window.location.origin}/api/vk/exchange-code`,
+					redirectUrl: `https://www.unimessage.ru/api/vk/exchange-code`,
 					responseMode: ConfigResponseMode.Callback,
 					source: ConfigSource.LOWCODE,
 					scope: 'messages',
