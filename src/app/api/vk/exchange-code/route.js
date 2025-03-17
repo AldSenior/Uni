@@ -35,7 +35,7 @@ export async function POST(request) {
 		if (!vkResponse.ok || tokenData.error) {
 			return NextResponse.json(
 				{
-					error: tokenData.error_description || 'VK API error',
+					error: 'VK API error',
 					details: tokenData.error,
 				},
 				{ status: 400 }
