@@ -1,93 +1,41 @@
 'use client'
-import { useEffect, useRef } from 'react'
-
-const VK_AUTH = () => {
-	const containerRef = useRef(null)
+import { VKConfig } from '@/app/config'
+import { useEffect, useState } from 'react'
+import VK from 'react-vk'
+const AuthComponent = () => {
+	const [isAuthorized, setIsAuthorized] = useState(false)
+	const [userId, setUserId] = useState(null)
 
 	useEffect(() => {
-		const loadVKSDK = async () => {
-			try {
-				const script = document.createElement('script')
-				script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
-				script.async = true
+		const authorize = async () => {
+			const vk = new VK({
+				appId: VKConfig.appId,
+				options: {
+					version: VKConfig.version,
+					onlyWidgets: true,
+				},
+			})
 
-				script.onload = () => {
-					if (window.VKIDSDK) {
-						const {
-							Config,
-							OneTap,
-							WidgetEvents,
-							OneTapInternalEvents,
-							ConfigResponseMode,
-							ConfigSource,
-						} = window.VKIDSDK
+			const userInfo = await vk.authorize({
+				scope: VKConfig.scope,
+			})
 
-						Config.init({
-							app: 53263292,
-							redirectUrl: `https://www.unimessage.ru/api/vk/callback`,
-							responseMode: ConfigResponseMode.Callback,
-							source: ConfigSource.Web,
-							scope: 'messages',
-						})
-
-						const oneTap = new OneTap()
-
-						if (containerRef.current) {
-							oneTap
-								.render({
-									container: containerRef.current,
-									showAlternativeLogin: true,
-								})
-								.on(WidgetEvents.ERROR, error => {
-									console.error('VKID Error:', error)
-									alert('Ошибка авторизации через VK')
-								})
-								.on(OneTapInternalEvents.LOGIN_SUCCESS, async payload => {
-									try {
-										console.log('Получен код авторизации:', payload.code)
-
-										const response = await fetch('/api/vk/exchange-code', {
-											method: 'POST',
-											headers: {
-												'Content-Type': 'application/json',
-											},
-											body: JSON.stringify({
-												code: payload.code,
-												device_id: payload.device_id,
-											}),
-										})
-
-										if (!response.ok) {
-											const error = await response.json()
-											throw new Error(error.message)
-										}
-
-										const { access_token } = await response.json()
-										localStorage.setItem('vk_token', access_token)
-										window.location.href = '/message'
-									} catch (error) {
-										console.error('Auth error:', error)
-										alert(error.message)
-									}
-								})
-						}
-					}
-				}
-
-				document.body.appendChild(script)
-
-				return () => {
-					document.body.removeChild(script)
-				}
-			} catch (error) {
-				console.error('Failed to load VK SDK:', error)
+			if (userInfo.status === 'connected') {
+				setIsAuthorized(true)
+				setUserId(userInfo.user_id)
+			} else {
+				console.error('Ошибка авторизации')
 			}
 		}
 
-		loadVKSDK()
+		authorize()
 	}, [])
 
-	return <div ref={containerRef} style={{ minHeight: '46px' }} />
+	if (isAuthorized) {
+		return <div>Вы вошли как {userId}</div>
+	}
+
+	return <div>Авторизация...</div>
 }
 
-export default VK_AUTH
+export default AuthComponent

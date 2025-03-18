@@ -13,9 +13,11 @@
     "axios": "^1.8.3",
     "easyvk": "^2.8.2",
     "next": "15.2.2",
+    "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-social-auth": "^1.1.8"
+    "react-social-auth": "^1.1.8",
+    "react-vk": "^5.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
