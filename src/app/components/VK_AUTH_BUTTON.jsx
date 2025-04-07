@@ -1,17 +1,42 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function VKAuthButton({ onSuccess, onError }) {
   const containerRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     const loadVKIDSDK = () => {
       return new Promise((resolve) => {
         const script = document.createElement("script");
-        script.src = "https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"; // Убедитесь, что указана правильная версия
+        script.src = "https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js";
         script.onload = () => resolve(window.VKIDSDK);
         document.body.appendChild(script);
       });
+    };
+
+    const exchangeCodeOnServer = async (code, deviceId) => {
+      try {
+        const response = await fetch("/api/auth/vk", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code, device_id: deviceId }),
+          credentials: "include", // Для сохранения кук
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to exchange code on server");
+        }
+
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Server exchange error:", error);
+        throw error;
+      }
     };
 
     const initializeVKSDK = async () => {
@@ -21,10 +46,10 @@ export default function VKAuthButton({ onSuccess, onError }) {
         if (VKID) {
           VKID.Config.init({
             app: 53263292,
-            redirectUrl: "https://www.unimessage.ru/message",
+            redirectUrl: "https://www.unimessage.ru/messages",
             responseMode: VKID.ConfigResponseMode.Callback,
             source: VKID.ConfigSource.LOWCODE,
-            scope: "message", // Заполните нужными доступами по необходимости
+            scope: "messages",
           });
 
           const oneTap = new VKID.OneTap();
@@ -35,13 +60,25 @@ export default function VKAuthButton({ onSuccess, onError }) {
               showAlternativeLogin: true,
             })
             .on(VKID.WidgetEvents.ERROR, vkidOnError)
-            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
-              const { code, device_id: deviceId } = payload;
+            .on(
+              VKID.OneTapInternalEvents.LOGIN_SUCCESS,
+              async function (payload) {
+                const { code, device_id: deviceId } = payload;
 
-              VKID.Auth.exchangeCode(code, deviceId)
-                .then(vkidOnSuccess)
-                .catch(vkidOnError);
-            });
+                try {
+                  // Обмениваем код на токен через серверный роут
+                  const serverData = await exchangeCodeOnServer(code, deviceId);
+
+                  // Вызываем оригинальный обработчик успеха
+                  vkidOnSuccess(serverData);
+
+                  // Перенаправляем на страницу сообщений
+                  router.push("/messages");
+                } catch (error) {
+                  vkidOnError(error);
+                }
+              },
+            );
         }
       } catch (error) {
         console.error("Error initializing VK ID SDK:", error);
@@ -52,21 +89,22 @@ export default function VKAuthButton({ onSuccess, onError }) {
     initializeVKSDK();
 
     return () => {
-      // Здесь можно выполнить очистку, если это необходимо.
-      // Например, отменить подписку на события, хотя, возможно, это не требуется для вашего виджета.
+      // Очистка при размонтировании
     };
-  }, [onError]);
+  }, [onError, router]);
 
   const vkidOnSuccess = (data) => {
     console.log("VK Auth Success:", data);
-    localStorage.setItem("vk_access_token", data.access_token);
-
-    onSuccess(data); // Обработка успешной авторизации
+    // Можно сохранять в localStorage, если нужно
+    if (data.access_token) {
+      localStorage.setItem("vk_access_token", data.access_token);
+    }
+    onSuccess(data);
   };
 
   const vkidOnError = (error) => {
     console.error("VK Auth Error:", error);
-    onError?.(error); // Обработка ошибки
+    onError?.(error);
   };
 
   return <div ref={containerRef} />;
