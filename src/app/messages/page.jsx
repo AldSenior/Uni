@@ -4,73 +4,59 @@ import { useRouter } from "next/navigation";
 
 export default function Messages() {
   const [messages, setMessages] = useState([]);
-  const [profiles, setProfiles] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("vk_access_token");
-      const expires = localStorage.getItem("token_expires");
+    const handleAuthCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const state = params.get("state");
+      const deviceId = params.get("device_id");
 
-      if (!token || Date.now() > parseInt(expires || 0)) {
-        localStorage.removeItem("vk_access_token");
-        localStorage.removeItem("token_expires");
-        router.push("/");
-        return false;
-      }
-      return true;
-    };
+      if (!code || !state) return;
 
-    const fetchMessages = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        // Получаем данные из localStorage
+        const savedState = localStorage.getItem("vk_auth_state");
+        const codeVerifier = localStorage.getItem("vk_code_verifier");
 
-        if (!checkAuth()) return;
+        if (state !== savedState) throw new Error("Invalid state");
+        if (!codeVerifier) throw new Error("Missing code verifier");
 
-        const token = localStorage.getItem("vk_access_token");
-        console.log("Using token:", token); // Для отладки
-
-        const response = await fetch("http://localhost:3000/api/messages", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await fetch("/api/exchange-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code,
+            code_verifier: codeVerifier,
+            device_id: deviceId,
+          }),
         });
 
-        if (response.status === 401) {
-          throw new Error("Требуется повторная авторизация");
-        }
-
-        const data = await response.json();
-
         if (!response.ok) {
-          throw new Error(
-            data.error_description || "Ошибка при загрузке сообщений",
-          );
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Ошибка авторизации");
         }
 
-        setMessages(data.items || []);
+        const { access_token, expires_in } = await response.json();
 
-        if (data.profiles) {
-          const profilesMap = data.profiles.reduce((acc, profile) => {
-            acc[profile.id] = profile;
-            return acc;
-          }, {});
-          setProfiles(profilesMap);
-        }
-      } catch (err) {
-        console.error("Ошибка:", err);
-        setError(err.message);
-        // localStorage.removeItem("vk_access_token");
-        // router.push("/");
-      } finally {
-        setLoading(false);
+        // Сохраняем токен и время экспирации
+        localStorage.setItem("vk_access_token", access_token);
+        localStorage.setItem("token_expires", Date.now() + expires_in * 1000);
+
+        // Очищаем URL после успешной авторизации
+        window.history.replaceState({}, document.title, "/messages");
+      } catch (error) {
+        console.error("Ошибка авторизации:", error);
+        // Полная очистка при ошибке
+        localStorage.removeItem("vk_code_verifier");
+        localStorage.removeItem("vk_auth_state");
+        localStorage.removeItem("vk_access_token");
+        router.push("/login");
       }
     };
 
-    fetchMessages();
+    handleAuthCallback();
   }, [router]);
 
   const getUserName = (peerId) => {

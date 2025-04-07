@@ -2,6 +2,15 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+// Отдельная функция для генерации state
+const generateState = () => {
+  const array = new Uint8Array(32);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 43);
+};
+
 export default function VKAuthButton({ onSuccess, onError }) {
   const router = useRouter();
 
@@ -27,10 +36,11 @@ export default function VKAuthButton({ onSuccess, onError }) {
     try {
       const codeVerifier = generateCodeVerifier();
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-      const state = generateCodeVerifier().slice(0, 43);
+      const state = generateState(); // Используем отдельную генерацию
 
-      sessionStorage.setItem("vk_code_verifier", codeVerifier);
-      sessionStorage.setItem("vk_auth_state", state);
+      // Сохраняем в localStorage вместо sessionStorage
+      localStorage.setItem("vk_code_verifier", codeVerifier);
+      localStorage.setItem("vk_auth_state", state);
 
       const authParams = new URLSearchParams({
         response_type: "code",
@@ -47,51 +57,6 @@ export default function VKAuthButton({ onSuccess, onError }) {
       onError?.(error.message);
     }
   };
-
-  useEffect(() => {
-    const handleCallback = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const state = params.get("state");
-      const deviceId = params.get("device_id");
-
-      try {
-        const savedState = sessionStorage.getItem("vk_auth_state");
-        if (state !== savedState) throw new Error("Invalid state");
-
-        const codeVerifier = sessionStorage.getItem("vk_code_verifier");
-        if (!codeVerifier) throw new Error("Missing code verifier");
-
-        const response = await fetch(
-          "http://localhost:3000/api/exchange-code",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              code,
-              code_verifier: codeVerifier,
-              device_id: deviceId,
-            }),
-          },
-        );
-
-        if (!response.ok) throw new Error("Token exchange failed");
-
-        const tokens = await response.json();
-        localStorage.setItem("vk_access_token", tokens.access_token);
-        onSuccess?.(tokens);
-        // router.push("/messages");
-      } catch (error) {
-        onError?.(error.message);
-        alert(error);
-      } finally {
-        sessionStorage.removeItem("vk_code_verifier");
-        sessionStorage.removeItem("vk_auth_state");
-      }
-    };
-
-    handleCallback();
-  }, [onSuccess, onError, router]);
 
   return (
     <button
