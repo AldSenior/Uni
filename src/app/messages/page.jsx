@@ -63,8 +63,8 @@ export default function Messages() {
       } catch (err) {
         console.error("Ошибка:", err);
         setError(err.message);
-        localStorage.removeItem("vk_access_token");
-        router.push("/");
+        // localStorage.removeItem("vk_access_token");
+        // router.push("/");
       } finally {
         setLoading(false);
       }
