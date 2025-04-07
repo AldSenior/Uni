@@ -116,7 +116,8 @@ export default function VKAuthButton({ onSuccess, onError }) {
         if (VKID) {
           VKID.Config.init({
             app: 53263292,
-            redirectUrl: "https://www.unimessage.ru/api/vk/exchange-code",
+            redirectUrl:
+              "https://server-unimessage.onrender.com/api/vk/callback",
             responseMode: VKID.ConfigResponseMode.Callback,
             source: VKID.ConfigSource.LOWCODE,
             scope: "", // Заполните нужными доступами по необходимости
