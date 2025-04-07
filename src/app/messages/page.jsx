@@ -8,17 +8,29 @@ export default function Messages() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await fetch(
-          "https://server-unimessage.onrender.com/api/messages",
-          {
-            credentials: "include",
+        // 1. Получаем токен из localStorage
+        const token = localStorage.getItem("vk_access_token");
+
+        if (!token) {
+          throw new Error("Необходима авторизация");
+        }
+
+        // 2. Отправляем запрос на сервер с токеном
+        const response = await fetch("https://your-server.com/api/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({ access_token: token }),
+        });
 
-        const data = await res.json();
+        const data = await response.json();
 
-        if (!res.ok) throw new Error(data.error || "Failed to fetch messages");
+        if (!response.ok) {
+          throw new Error(data.error || "Ошибка при загрузке сообщений");
+        }
 
+        // 3. Устанавливаем полученные сообщения
         setMessages(data.data.conversations);
       } catch (err) {
         setError(err.message);
@@ -32,7 +44,7 @@ export default function Messages() {
 
   return (
     <div>
-      <h1>Сообщения</h1>
+      <h1>Ваши сообщения</h1>
       {messages.length > 0 ? (
         <ul>
           {messages.map((msg) => (
