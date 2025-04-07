@@ -68,7 +68,10 @@ export default function VKAuthButton({ onSuccess, onError }) {
       const state = params.get("state");
       const deviceId = params.get("device_id");
 
-      if (!code) return; // Прекращаем выполнение если нет кода
+      if (!code) {
+        alert("кода нету");
+        return;
+      } // Прекращаем выполнение если нет кода
 
       try {
         const savedState = sessionStorage.getItem("vk_auth_state");
