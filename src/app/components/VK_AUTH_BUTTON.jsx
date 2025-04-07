@@ -55,39 +55,38 @@ export default function VKAuthButton({ onSuccess, onError }) {
       const state = params.get("state");
       const deviceId = params.get("device_id");
 
-      if (code && state) {
-        try {
-          const savedState = sessionStorage.getItem("vk_auth_state");
-          if (state !== savedState) throw new Error("Invalid state");
+      try {
+        const savedState = sessionStorage.getItem("vk_auth_state");
+        if (state !== savedState) throw new Error("Invalid state");
 
-          const codeVerifier = sessionStorage.getItem("vk_code_verifier");
-          if (!codeVerifier) throw new Error("Missing code verifier");
+        const codeVerifier = sessionStorage.getItem("vk_code_verifier");
+        if (!codeVerifier) throw new Error("Missing code verifier");
 
-          const response = await fetch(
-            "http://localhost:3000/api/exchange-code",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                code,
-                code_verifier: codeVerifier,
-                device_id: deviceId,
-              }),
-            },
-          );
+        const response = await fetch(
+          "http://localhost:3000/api/exchange-code",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code,
+              code_verifier: codeVerifier,
+              device_id: deviceId,
+            }),
+          },
+        );
 
-          if (!response.ok) throw new Error("Token exchange failed");
+        if (!response.ok) throw new Error("Token exchange failed");
 
-          const tokens = await response.json();
-          localStorage.setItem("vk_access_token", tokens.access_token);
-          onSuccess?.(tokens);
-          // router.push("/messages");
-        } catch (error) {
-          onError?.(error.message);
-        } finally {
-          sessionStorage.removeItem("vk_code_verifier");
-          sessionStorage.removeItem("vk_auth_state");
-        }
+        const tokens = await response.json();
+        localStorage.setItem("vk_access_token", tokens.access_token);
+        onSuccess?.(tokens);
+        // router.push("/messages");
+      } catch (error) {
+        onError?.(error.message);
+        alert(error);
+      } finally {
+        sessionStorage.removeItem("vk_code_verifier");
+        sessionStorage.removeItem("vk_auth_state");
       }
     };
 
