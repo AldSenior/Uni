@@ -37,16 +37,26 @@ export default function VKAuthButton({ onSuccess, onError }) {
               showAlternativeLogin: true,
             })
             .on(VKID.WidgetEvents.ERROR, vkidOnError)
-            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
-              const { code, device_id: deviceId } = payload;
+            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload) => {
+              try {
+                const response = await fetch(
+                  "https://server-unimessage.onrender.com/api/vk/exchange-code",
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: payload.code }),
+                    credentials: "include",
+                  },
+                );
 
-              VKID.Auth.exchangeCode(code, deviceId)
-                .then((data) => {
-                  vkidOnSuccess(data);
-                  // Перенаправляем на страницу сообщений после успешной авторизации
-                  router.push("/messages");
-                })
-                .catch(vkidOnError);
+                if (!response.ok) throw new Error("Auth failed");
+
+                const data = await response.json();
+                vkidOnSuccess(data);
+                router.push("/messages");
+              } catch (error) {
+                vkidOnError(error);
+              }
             });
         }
       } catch (error) {
@@ -58,13 +68,13 @@ export default function VKAuthButton({ onSuccess, onError }) {
     initializeVKSDK();
 
     return () => {
-      // Очистка при размонтировании
+      const widget = document.querySelector(".VkIdWebSdk__button");
+      if (widget) widget.remove();
     };
   }, [onError, router]);
 
   const vkidOnSuccess = (data) => {
     console.log("VK Auth Success:", data);
-    localStorage.setItem("vk_access_token", data.access_token);
     onSuccess(data);
   };
 
