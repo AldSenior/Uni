@@ -99,9 +99,10 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
             onSuccess?.(data);
             router.push("/messages");
+            console.log(localStorage.get("vk_access_token"));
           }
         } catch (error) {
-          localStorage.removeItem("vk_access_token");
+          // localStorage.removeItem("vk_access_token");
           onError?.(error.message);
         } finally {
           sessionStorage.removeItem("vk_code_verifier");
