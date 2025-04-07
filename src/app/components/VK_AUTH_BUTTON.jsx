@@ -76,17 +76,32 @@ export default function VKAuthButton({ onSuccess, onError }) {
             },
           );
 
-          if (!response.ok) throw new Error("Token exchange failed");
+          const data = await response.json();
 
-          const tokens = await response.json();
-          localStorage.setItem("vk_access_token", tokens.access_token);
-          localStorage.setItem(
-            "token_expires",
-            Date.now() + tokens.expires_in * 1000,
-          );
-          onSuccess?.(tokens);
-          router.push("/messages");
+          if (!response.ok) {
+            throw new Error(data.error_description || "Token exchange failed");
+          }
+
+          // Сохраняем токен и редиректим только если есть access_token
+          if (data.access_token) {
+            localStorage.setItem("vk_access_token", data.access_token);
+            localStorage.setItem(
+              "token_expires",
+              Date.now() + data.expires_in * 1000,
+            );
+
+            // Очищаем URL от параметров
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname,
+            );
+
+            onSuccess?.(data);
+            router.push("/messages");
+          }
         } catch (error) {
+          localStorage.removeItem("vk_access_token");
           onError?.(error.message);
         } finally {
           sessionStorage.removeItem("vk_code_verifier");
@@ -101,11 +116,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
   return (
     <button
       onClick={handleLogin}
-      style={{
-        padding: "10px 20px",
-        backgroundColor: "#0077FF",
-        color: "white",
-      }}
+      className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
     >
       Войти через VK ID
     </button>
