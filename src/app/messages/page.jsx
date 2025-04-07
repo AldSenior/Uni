@@ -20,7 +20,7 @@ export default function Messages() {
 
         if (response.status === 401) {
           // Если не авторизован - перенаправляем на логин
-          window.location.href = "/";
+          // window.location.href = "/";
           return;
         }
 
