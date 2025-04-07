@@ -42,13 +42,16 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
               try {
                 // 1. Отправляем код на ваш сервер для обмена на токен
-                const response = await fetch("/api/exchange-code", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
+                const response = await fetch(
+                  "https://server-unimessage.onrender.com/api/exchange-code",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ code, device_id: deviceId }),
                   },
-                  body: JSON.stringify({ code, device_id: deviceId }),
-                });
+                );
 
                 if (!response.ok) {
                   throw new Error("Failed to exchange code for token");
