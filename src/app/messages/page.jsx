@@ -1,30 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 
-interface Message {
-  peer_id: number;
-  last_message: {
-    id: number;
-    text: string;
-    date: number;
-  };
-  unread_count: number;
-}
-
-interface Profile {
-  id: number;
-  first_name: string;
-  last_name: string;
-  photo_100: string;
-  domain: string;
-  online?: number;
-}
-
 export default function Messages() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [profiles, setProfiles] = useState<Record<number, Profile>>({});
+  const [messages, setMessages] = useState([]);
+  const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -46,7 +27,9 @@ export default function Messages() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error_description || "Ошибка при загрузке сообщений");
+          throw new Error(
+            data.error_description || "Ошибка при загрузке сообщений",
+          );
         }
 
         // Устанавливаем данные
@@ -54,13 +37,12 @@ export default function Messages() {
 
         // Преобразуем профили в удобный формат
         if (data.profiles) {
-          const profilesMap = data.profiles.reduce((acc: Record<number, Profile>, profile: Profile) => {
+          const profilesMap = data.profiles.reduce((acc, profile) => {
             acc[profile.id] = profile;
             return acc;
           }, {});
           setProfiles(profilesMap);
         }
-
       } catch (err) {
         console.error("Fetch messages error:", err);
         setError(err instanceof Error ? err.message : "Неизвестная ошибка");
@@ -72,13 +54,13 @@ export default function Messages() {
     fetchMessages();
   }, []);
 
-  const getUserName = (peerId: number) => {
+  const getUserName = (peerId) => {
     const profile = profiles[peerId];
     if (!profile) return `Пользователь ${peerId}`;
     return `${profile.first_name} ${profile.last_name}`;
   };
 
-  const getUserPhoto = (peerId: number) => {
+  const getUserPhoto = (peerId) => {
     return profiles[peerId]?.photo_100 || "/default-avatar.jpg";
   };
 
@@ -93,7 +75,10 @@ export default function Messages() {
       {messages.length > 0 ? (
         <ul className="messages-list">
           {messages.map((msg) => (
-            <li key={`${msg.peer_id}_${msg.last_message.id}`} className="message-item">
+            <li
+              key={`${msg.peer_id}_${msg.last_message.id}`}
+              className="message-item"
+            >
               <div className="message-header">
                 <img
                   src={getUserPhoto(msg.peer_id)}
@@ -101,7 +86,9 @@ export default function Messages() {
                   className="message-avatar"
                 />
                 <div className="message-info">
-                  <span className="message-sender">{getUserName(msg.peer_id)}</span>
+                  <span className="message-sender">
+                    {getUserName(msg.peer_id)}
+                  </span>
                   {msg.unread_count > 0 && (
                     <span className="unread-badge">{msg.unread_count}</span>
                   )}
@@ -169,7 +156,8 @@ export default function Messages() {
           font-size: 12px;
           color: #666;
         }
-        .loading, .no-messages {
+        .loading,
+        .no-messages {
           text-align: center;
           padding: 20px;
           color: #666;
