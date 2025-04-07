@@ -1,4 +1,3 @@
-import AuthHandler from "../app/components/AuthHandler";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -20,9 +19,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ru">
-      <body>
-        <AuthHandler>{children}</AuthHandler>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
