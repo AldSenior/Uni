@@ -17,7 +17,8 @@ export default function Messages() {
       if (!token || !expires || Date.now() > parseInt(expires)) {
         localStorage.removeItem("vk_access_token");
         localStorage.removeItem("token_expires");
-        router.push("/");
+        // router.push("/");
+        alert("что нахуй?");
         return false;
       }
       return true;
@@ -41,7 +42,9 @@ export default function Messages() {
         if (response.status === 401) {
           localStorage.removeItem("vk_access_token");
           localStorage.removeItem("token_expires");
-          router.push("/");
+          // router.push("/");
+          //
+          alert("че блять 401");
           return;
         }
 
