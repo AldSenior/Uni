@@ -16,8 +16,9 @@ export default function Messages() {
         setError(null);
 
         const token = localStorage.getItem("vk_access_token");
+        console.log(token);
         if (!token) {
-          router.push("/login");
+          router.push("/");
           return;
         }
 
