@@ -1,27 +1,29 @@
-// next.config.mjs
-import { withContentSecurityPolicy } from "next-content-security-policy";
-
-const contentSecurityPolicy = `
-  default-src 'self';
-  script-src 'self' https://trustedscripts.example.com;
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' data:;
-  frame-ancestors 'self' https://vk.com https://*.vk.com;
-`.replace(/\n/g, "");
-
-export default withContentSecurityPolicy({
-  reactStrictMode: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)", // применяем для всех маршрутов
+        source: "/(.*)", // Применяется ко всем страницам
         headers: [
           {
             key: "Content-Security-Policy",
-            value: contentSecurityPolicy,
+            value: `
+              frame-ancestors
+                'self'
+                https://vk.com
+                https://*.vk.com
+                https://vk.ru
+                https://*.vk.ru
+                https://web.vk.me
+                https://*.pages-ac.vk-apps.com
+               `
+              .replace(/\s+/g, " ")
+              .trim(),
           },
         ],
       },
     ];
   },
-});
+};
+
+export default nextConfig;
