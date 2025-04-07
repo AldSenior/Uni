@@ -16,13 +16,16 @@ export default function Messages() {
         }
 
         // 2. Отправляем запрос на сервер с токеном
-        const response = await fetch("https://your-server.com/api/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          "https://server-unimessage.onrender.com/api/messages",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ access_token: token }),
           },
-          body: JSON.stringify({ access_token: token }),
-        });
+        );
 
         const data = await response.json();
 
