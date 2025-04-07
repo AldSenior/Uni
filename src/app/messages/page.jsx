@@ -17,7 +17,7 @@ export default function Messages() {
 
         // 2. Отправляем запрос на сервер с токеном
         const response = await fetch(
-          "http://server-unimessage.onrender.com/api/messages",
+          "https://server-unimessage.onrender.com/api/messages",
           {
             method: "POST",
             headers: {
