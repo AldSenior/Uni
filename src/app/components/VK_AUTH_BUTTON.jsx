@@ -39,7 +39,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
         state: state,
-        scope: "messages",
+        scope: "messages,offline",
       });
 
       window.location.href = `https://id.vk.com/authorize?${authParams.toString()}`;
