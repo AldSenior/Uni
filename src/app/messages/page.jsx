@@ -4,59 +4,73 @@ import { useRouter } from "next/navigation";
 
 export default function Messages() {
   const [messages, setMessages] = useState([]);
+  const [profiles, setProfiles] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const state = params.get("state");
-      const deviceId = params.get("device_id");
+    const checkAuth = () => {
+      const token = localStorage.getItem("vk_access_token");
+      const expires = localStorage.getItem("token_expires");
 
-      if (!code || !state) return;
+      if (!token || !expires || Date.now() > parseInt(expires)) {
+        localStorage.removeItem("vk_access_token");
+        localStorage.removeItem("token_expires");
+        router.push("/");
+        return false;
+      }
+      return true;
+    };
 
+    const fetchMessages = async () => {
       try {
-        // Получаем данные из localStorage
-        const savedState = localStorage.getItem("vk_auth_state");
-        const codeVerifier = localStorage.getItem("vk_code_verifier");
+        setLoading(true);
+        setError(null);
 
-        if (state !== savedState) throw new Error("Invalid state");
-        if (!codeVerifier) throw new Error("Missing code verifier");
+        if (!checkAuth()) return;
 
-        const response = await fetch("/api/exchange-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code,
-            code_verifier: codeVerifier,
-            device_id: deviceId,
-          }),
+        const token = localStorage.getItem("vk_access_token");
+
+        const response = await fetch("http://localhost:3000/api/messages", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Ошибка авторизации");
+        if (response.status === 401) {
+          localStorage.removeItem("vk_access_token");
+          localStorage.removeItem("token_expires");
+          router.push("/");
+          return;
         }
 
-        const { access_token, expires_in } = await response.json();
+        const data = await response.json();
 
-        // Сохраняем токен и время экспирации
-        localStorage.setItem("vk_access_token", access_token);
-        localStorage.setItem("token_expires", Date.now() + expires_in * 1000);
+        if (!response.ok) {
+          throw new Error(
+            data.error_description || "Ошибка при загрузке сообщений",
+          );
+        }
 
-        // Очищаем URL после успешной авторизации
-        window.history.replaceState({}, document.title, "/messages");
-      } catch (error) {
-        console.error("Ошибка авторизации:", error);
-        // Полная очистка при ошибке
-        localStorage.removeItem("vk_code_verifier");
-        localStorage.removeItem("vk_auth_state");
-        localStorage.removeItem("vk_access_token");
-        router.push("/login");
+        setMessages(data.items || []);
+
+        if (data.profiles) {
+          const profilesMap = data.profiles.reduce((acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {});
+          setProfiles(profilesMap);
+        }
+      } catch (err) {
+        console.error("Ошибка:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    handleAuthCallback();
+    fetchMessages();
   }, [router]);
 
   const getUserName = (peerId) => {
@@ -70,25 +84,55 @@ export default function Messages() {
     return profiles[peerId]?.photo_100 || "/default-avatar.jpg";
   };
 
-  // if (loading) {
-  //   return (
-  //     <div className="flex justify-center items-center h-64">
-  //       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-  //     </div>
-  //   );
-  // }
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-  // if (error) {
-  //   return (
-  //     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-  //       {error}
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          {error}
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Попробовать снова
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Ваши сообщения</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Ваши сообщения</h1>
+        <button
+          onClick={() => {
+            localStorage.removeItem("vk_access_token");
+            localStorage.removeItem("token_expires");
+            router.push("/");
+          }}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+        >
+          Выйти
+        </button>
+      </div>
 
       {messages.length > 0 ? (
         <ul className="space-y-4">
@@ -101,7 +145,7 @@ export default function Messages() {
                 <img
                   src={getUserPhoto(msg.peer_id)}
                   alt={getUserName(msg.peer_id)}
-                  className="w-10 h-10 rounded-full"
+                  className="w-10 h-10 rounded-full object-cover"
                 />
                 <div className="flex-1">
                   <div className="flex items-center">
@@ -114,7 +158,7 @@ export default function Messages() {
                   </div>
                   <p className="text-gray-800">{msg.last_message.text}</p>
                   <p className="text-xs text-gray-500">
-                    {new Date(msg.last_message.date * 1000).toLocaleString()}
+                    {formatDate(msg.last_message.date)}
                   </p>
                 </div>
               </div>
