@@ -39,7 +39,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
         state: state,
-        scope: "messages,offline",
+        scope: "messages",
       });
 
       window.location.href = `https://id.vk.com/authorize?${authParams.toString()}`;
@@ -64,7 +64,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
           if (!codeVerifier) throw new Error("Missing code verifier");
 
           const response = await fetch(
-            "http://localhost:3000/api/exchange-code",
+            "https://server-unimessage.onrender.com/api/exchange-code",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -76,33 +76,13 @@ export default function VKAuthButton({ onSuccess, onError }) {
             },
           );
 
-          const data = await response.json();
+          if (!response.ok) throw new Error("Token exchange failed");
 
-          if (!response.ok) {
-            throw new Error(data.error_description || "Token exchange failed");
-          }
-
-          // Сохраняем токен и редиректим только если есть access_token
-          if (data.access_token) {
-            localStorage.setItem("vk_access_token", data.access_token);
-            localStorage.setItem(
-              "token_expires",
-              Date.now() + data.expires_in * 1000,
-            );
-
-            // Очищаем URL от параметров
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname,
-            );
-
-            onSuccess?.(data);
-            router.push("/messages");
-            console.log(localStorage.get("vk_access_token"));
-          }
+          const tokens = await response.json();
+          localStorage.setItem("vk_access_token", tokens.access_token);
+          onSuccess?.(tokens);
+          router.push("/messages");
         } catch (error) {
-          // localStorage.removeItem("vk_access_token");
           onError?.(error.message);
         } finally {
           sessionStorage.removeItem("vk_code_verifier");
@@ -117,7 +97,11 @@ export default function VKAuthButton({ onSuccess, onError }) {
   return (
     <button
       onClick={handleLogin}
-      className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+      style={{
+        padding: "10px 20px",
+        backgroundColor: "#0077FF",
+        color: "white",
+      }}
     >
       Войти через VK ID
     </button>
