@@ -64,7 +64,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
           if (!codeVerifier) throw new Error("Missing code verifier");
 
           const response = await fetch(
-            "https://server-unimessage.onrender.com/api/exchange-code",
+            "http://localhost:3000/api/exchange-code",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
