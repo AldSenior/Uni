@@ -80,6 +80,10 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
           const tokens = await response.json();
           localStorage.setItem("vk_access_token", tokens.access_token);
+          localStorage.setItem(
+            "token_expires",
+            Date.now() + tokens.expires_in * 1000,
+          );
           onSuccess?.(tokens);
           router.push("/messages");
         } catch (error) {
