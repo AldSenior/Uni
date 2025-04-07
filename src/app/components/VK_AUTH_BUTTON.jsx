@@ -4,7 +4,20 @@ import { useRouter } from "next/navigation";
 
 export default function VKAuthButton({ onSuccess, onError }) {
   const router = useRouter();
+  useEffect(() => {
+    const checkServerConnection = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/healthcheck");
+        if (!response.ok) throw new Error("Сервер не отвечает");
+        console.log("Соединение с сервером установлено");
+      } catch (error) {
+        console.error("Ошибка соединения:", error);
+        alert("Ошибка подключения к серверу");
+      }
+    };
 
+    checkServerConnection();
+  }, []);
   const generateCodeVerifier = () => {
     const array = new Uint8Array(64);
     window.crypto.getRandomValues(array);
