@@ -81,7 +81,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
           const tokens = await response.json();
           localStorage.setItem("vk_access_token", tokens.access_token);
           onSuccess?.(tokens);
-          router.push("/messages");
+          // router.push("/messages");
         } catch (error) {
           onError?.(error.message);
         } finally {
