@@ -15,8 +15,8 @@ export default function Messages() {
       const expires = localStorage.getItem("token_expires");
 
       if (!token || !expires || Date.now() > parseInt(expires)) {
-        localStorage.removeItem("vk_access_token");
-        localStorage.removeItem("token_expires");
+        // localStorage.removeItem("vk_access_token");
+        // localStorage.removeItem("token_expires");
         // router.push("/");
         alert("что нахуй?");
         return false;
@@ -40,8 +40,8 @@ export default function Messages() {
         });
 
         if (response.status === 401) {
-          localStorage.removeItem("vk_access_token");
-          localStorage.removeItem("token_expires");
+          // localStorage.removeItem("vk_access_token");
+          // localStorage.removeItem("token_expires");
           // router.push("/");
           //
           alert("че блять 401");

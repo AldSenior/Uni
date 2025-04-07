@@ -77,7 +77,9 @@ export default function VKAuthButton({ onSuccess, onError }) {
           },
         );
 
-        if (!response.ok) throw new Error("Token exchange failed");
+        if (!response.ok) {
+          alert("всм");
+        }
 
         const tokens = await response.json();
         localStorage.setItem("vk_access_token", tokens.access_token);
