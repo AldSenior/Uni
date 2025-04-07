@@ -41,8 +41,20 @@ export default function VKAuthButton({ onSuccess, onError }) {
               const { code, device_id: deviceId } = payload;
 
               try {
-                // 1. Обмениваем код на токен через VK SDK
-                const authData = await VKID.Auth.exchangeCode(code, deviceId);
+                // 1. Отправляем код на ваш сервер для обмена на токен
+                const response = await fetch("/api/exchange-code", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ code, device_id: deviceId }),
+                });
+
+                if (!response.ok) {
+                  throw new Error("Failed to exchange code for token");
+                }
+
+                const authData = await response.json();
                 vkidOnSuccess(authData);
 
                 // 2. Сохраняем токен в localStorage
