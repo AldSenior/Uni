@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import VKAuthButton from "../components/VK_AUTH_BUTTON";
+import VKAuthButton from "./components/VK_AUTH_BUTTON";
 
 export default function LoginPage() {
   const [user, setUser] = useState(null);
