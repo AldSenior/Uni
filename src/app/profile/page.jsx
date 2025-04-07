@@ -31,8 +31,8 @@ export default function Profile() {
   return (
     <div>
       <h1>Профиль пользователя</h1>
-      <p>Имя: {userData.first_name}</p>
-      <p>Фамилия: {userData.last_name}</p>
+      {/* <p>Имя: {userData?.first_name}</p>
+      <p>Фамилия: {userData.last_name}</p> */}
     </div>
   );
 }
