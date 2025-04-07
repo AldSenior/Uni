@@ -17,10 +17,10 @@ export default function VKAuthButton({ onSuccess, onError }) {
     // Инициализация VK ID SDK
     Config.init({
       app: 53263292, // Ваш app_id
-      redirectUrl: "https://www.unimessage.ru/api/vk/callback", // Адаптивный redirect URL", // Адаптивный redirect URL
+      redirectUrl: "https://www.unimessage.ru/profile", // Адаптивный redirect URL", // Адаптивный redirect URL
       responseMode: ConfigResponseMode.Callback,
       source: ConfigSource.LOWCODE,
-      scope: "messages", // Нужные разрешения
+      scope: "message", // Нужные разрешения
     });
 
     const oneTap = new OneTap();
@@ -44,7 +44,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
   const handleLoginSuccess = async (payload) => {
     try {
       const response = await fetch(
-        "http://localhost:3000/api/vk/exchange-code",
+        "https://server-unimessage.onrender.com/api/vk/exchange-code",
         {
           method: "POST",
           headers: {

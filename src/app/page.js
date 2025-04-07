@@ -17,30 +17,30 @@ export default function LoginPage() {
     setError(error.message || "Ошибка авторизации");
     console.error("Auth error:", error);
   };
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  // useEffect(() => {
+  //   const handleHashChange = () => {
+  //     const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-      if (hashParams.has("code")) {
-        const code = hashParams.get("code");
-        const device_id = hashParams.get("device_id");
+  //     if (hashParams.has("code")) {
+  //       const code = hashParams.get("code");
+  //       const device_id = hashParams.get("device_id");
 
-        // Сохраняем в localStorage
-        localStorage.setItem("vk_code", code);
-        localStorage.setItem("vk_device_id", device_id);
+  //       // Сохраняем в localStorage
+  //       localStorage.setItem("vk_code", code);
+  //       localStorage.setItem("vk_device_id", device_id);
 
-        // Очищаем хэш
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname,
-        );
-      }
-    };
+  //       // Очищаем хэш
+  //       window.history.replaceState(
+  //         {},
+  //         document.title,
+  //         window.location.pathname,
+  //       );
+  //     }
+  //   };
 
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
+  //   window.addEventListener("hashchange", handleHashChange);
+  //   return () => window.removeEventListener("hashchange", handleHashChange);
+  // }, []);
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Вход через VK ID</h1>
