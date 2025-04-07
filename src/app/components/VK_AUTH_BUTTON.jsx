@@ -1,98 +1,109 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function VKAuthButton({ onSuccess, onError }) {
-  const containerRef = useRef(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const loadVKIDSDK = () => {
-      return new Promise((resolve) => {
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js";
-        script.onload = () => resolve(window.VKIDSDK);
-        document.body.appendChild(script);
+  const generateCodeVerifier = () => {
+    const array = new Uint8Array(64);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, 128);
+  };
+
+  const generateCodeChallenge = async (codeVerifier) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    const digest = await window.crypto.subtle.digest("SHA-256", data);
+    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+  };
+
+  const handleLogin = async () => {
+    try {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const state = generateCodeVerifier().slice(0, 43);
+
+      sessionStorage.setItem("vk_code_verifier", codeVerifier);
+      sessionStorage.setItem("vk_auth_state", state);
+
+      const authParams = new URLSearchParams({
+        response_type: "code",
+        client_id: "53263292",
+        redirect_uri: "https://www.unimessage.ru/messages",
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
+        state: state,
+        scope: "messages",
       });
-    };
 
-    const initializeVKSDK = async () => {
-      try {
-        const VKID = await loadVKIDSDK();
+      window.location.href = `https://id.vk.com/authorize?${authParams.toString()}`;
+    } catch (error) {
+      onError?.(error.message);
+    }
+  };
 
-        if (VKID) {
-          VKID.Config.init({
-            app: 53263292,
-            redirectUrl: "https://www.unimessage.ru/messages",
-            responseMode: VKID.ConfigResponseMode.Callback,
-            source: VKID.ConfigSource.LOWCODE,
-            scope: "messages",
-          });
+  useEffect(() => {
+    const handleCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const state = params.get("state");
+      const deviceId = params.get("device_id");
 
-          const oneTap = new VKID.OneTap();
+      if (code && state) {
+        try {
+          const savedState = sessionStorage.getItem("vk_auth_state");
+          if (state !== savedState) throw new Error("Invalid state");
 
-          oneTap
-            .render({
-              container: containerRef.current,
-              showAlternativeLogin: true,
-            })
-            .on(VKID.WidgetEvents.ERROR, vkidOnError)
-            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload) => {
-              const { code } = payload;
+          const codeVerifier = sessionStorage.getItem("vk_code_verifier");
+          if (!codeVerifier) throw new Error("Missing code verifier");
 
-              try {
-                // 1. Отправляем код на ваш сервер для обмена на токен
-                const response = await fetch(
-                  "https://server-unimessage.onrender.com/api/exchange-code",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ code }),
-                  },
-                );
+          const response = await fetch(
+            "https://server-unimessage.onrender.com/api/exchange-code",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                code,
+                code_verifier: codeVerifier,
+                device_id: deviceId,
+              }),
+            },
+          );
 
-                if (!response.ok) {
-                  throw new Error("Failed to exchange code for token");
-                }
+          if (!response.ok) throw new Error("Token exchange failed");
 
-                const authData = await response.json();
-                vkidOnSuccess(authData);
-
-                // 2. Сохраняем токен в localStorage
-                localStorage.setItem("vk_access_token", authData.access_token);
-
-                // 3. Перенаправляем на страницу сообщений
-                router.push("/messages");
-              } catch (error) {
-                vkidOnError(error);
-              }
-            });
+          const tokens = await response.json();
+          localStorage.setItem("vk_access_token", tokens.access_token);
+          onSuccess?.(tokens);
+          router.push("/messages");
+        } catch (error) {
+          onError?.(error.message);
+        } finally {
+          sessionStorage.removeItem("vk_code_verifier");
+          sessionStorage.removeItem("vk_auth_state");
         }
-      } catch (error) {
-        console.error("Error initializing VK ID SDK:", error);
-        onError?.(error.message);
       }
     };
 
-    initializeVKSDK();
+    handleCallback();
+  }, [onSuccess, onError, router]);
 
-    return () => {
-      const widget = document.querySelector(".VkIdWebSdk__button");
-      if (widget) widget.remove();
-    };
-  }, [onError, router]);
-
-  const vkidOnSuccess = (data) => {
-    console.log("VK Auth Success:", data);
-    onSuccess(data);
-  };
-
-  const vkidOnError = (error) => {
-    console.error("VK Auth Error:", error);
-    onError?.(error);
-  };
-
-  return <div ref={containerRef} />;
+  return (
+    <button
+      onClick={handleLogin}
+      style={{
+        padding: "10px 20px",
+        backgroundColor: "#0077FF",
+        color: "white",
+      }}
+    >
+      Войти через VK ID
+    </button>
+  );
 }
