@@ -16,29 +16,6 @@ export default function VKAuthButton({ onSuccess, onError }) {
       });
     };
 
-    const exchangeCodeOnServer = async (code, deviceId) => {
-      try {
-        const response = await fetch("https://www.unimessage.ru/api/auth/vk", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ code, device_id: deviceId }),
-          credentials: "include", // Для сохранения кук
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to exchange code on server");
-        }
-
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        console.error("Server exchange error:", error);
-        throw error;
-      }
-    };
-
     const initializeVKSDK = async () => {
       try {
         const VKID = await loadVKIDSDK();
@@ -60,25 +37,17 @@ export default function VKAuthButton({ onSuccess, onError }) {
               showAlternativeLogin: true,
             })
             .on(VKID.WidgetEvents.ERROR, vkidOnError)
-            .on(
-              VKID.OneTapInternalEvents.LOGIN_SUCCESS,
-              async function (payload) {
-                const { code, device_id: deviceId } = payload;
+            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+              const { code, device_id: deviceId } = payload;
 
-                try {
-                  // Обмениваем код на токен через серверный роут
-                  const serverData = await exchangeCodeOnServer(code, deviceId);
-
-                  // Вызываем оригинальный обработчик успеха
-                  vkidOnSuccess(serverData);
-
-                  // Перенаправляем на страницу сообщений
+              VKID.Auth.exchangeCode(code, deviceId)
+                .then((data) => {
+                  vkidOnSuccess(data);
+                  // Перенаправляем на страницу сообщений после успешной авторизации
                   router.push("/messages");
-                } catch (error) {
-                  vkidOnError(error);
-                }
-              },
-            );
+                })
+                .catch(vkidOnError);
+            });
         }
       } catch (error) {
         console.error("Error initializing VK ID SDK:", error);
@@ -95,10 +64,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
   const vkidOnSuccess = (data) => {
     console.log("VK Auth Success:", data);
-    // Можно сохранять в localStorage, если нужно
-    if (data.access_token) {
-      localStorage.setItem("vk_access_token", data.access_token);
-    }
+    localStorage.setItem("vk_access_token", data.access_token);
     onSuccess(data);
   };
 
