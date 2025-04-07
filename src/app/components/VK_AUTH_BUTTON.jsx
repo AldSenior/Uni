@@ -18,7 +18,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
     const exchangeCodeOnServer = async (code, deviceId) => {
       try {
-        const response = await fetch("/api/auth/vk", {
+        const response = await fetch("https://www.unimessage.ru/api/auth/vk", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
