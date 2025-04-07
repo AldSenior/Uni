@@ -28,11 +28,11 @@ export default function Messages() {
           },
         });
 
-        if (response.status === 401) {
-          localStorage.removeItem("vk_access_token");
-          router.push("/");
-          return;
-        }
+        // if (response.status === 401) {
+        //   localStorage.removeItem("vk_access_token");
+        //   router.push("/");
+        //   return;
+        // }
 
         const data = await response.json();
 
