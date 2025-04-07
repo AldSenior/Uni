@@ -38,7 +38,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
             })
             .on(VKID.WidgetEvents.ERROR, vkidOnError)
             .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload) => {
-              const { code, device_id: deviceId } = payload;
+              const { code } = payload;
 
               try {
                 // 1. Отправляем код на ваш сервер для обмена на токен
@@ -49,7 +49,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
                     headers: {
                       "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ code, device_id: deviceId }),
+                    body: JSON.stringify({ code }),
                   },
                 );
 
