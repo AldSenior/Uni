@@ -1,0 +1,94 @@
+"use client";
+import { useEffect, useRef } from "react";
+import {
+  Config,
+  OneTap,
+  Auth,
+  WidgetEvents,
+  OneTapInternalEvents,
+  ConfigResponseMode,
+  ConfigSource,
+} from "@vkid/sdk";
+
+export default function VKAuthButton({ onSuccess, onError }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    // Инициализация VK ID SDK
+    Config.init({
+      app: 53263292, // Ваш app_id
+      redirectUrl: "https://www.unimessage.ru/api/vk/callback", // Адаптивный redirect URL", // Адаптивный redirect URL
+      responseMode: ConfigResponseMode.Callback,
+      source: ConfigSource.LOWCODE,
+      scope: "messages", // Нужные разрешения
+    });
+
+    const oneTap = new OneTap();
+
+    // Рендеринг виджета
+    if (containerRef.current) {
+      oneTap
+        .render({
+          container: containerRef.current,
+          showAlternativeLogin: true,
+        })
+        .on(WidgetEvents.ERROR, handleError)
+        .on(OneTapInternalEvents.LOGIN_SUCCESS, handleLoginSuccess);
+    }
+
+    return () => {
+      oneTap.unmount();
+    };
+  }, []);
+
+  const handleLoginSuccess = async (payload) => {
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/vk/exchange-code",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            code: payload.code,
+            device_id: payload.device_id,
+          }),
+          credentials: "include", // Если используете куки
+        },
+      );
+
+      // Обрабатываем случаи, когда ответ не JSON
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        throw new Error(text || "Invalid server response");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || "Request failed");
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || "VK auth failed");
+      }
+
+      console.log("Auth success:", data);
+      onSuccess(data);
+    } catch (error) {
+      console.error("Auth error:", error);
+      onError(error.message);
+    }
+  };
+
+  const handleError = (error) => {
+    console.error("VK Auth error:", error);
+    onError?.(error);
+  };
+
+  return <div ref={containerRef} />;
+}
+//
