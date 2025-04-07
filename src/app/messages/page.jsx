@@ -70,21 +70,21 @@ export default function Messages() {
     return profiles[peerId]?.photo_100 || "/default-avatar.jpg";
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex justify-center items-center h-64">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  //     </div>
+  //   );
+  // }
 
-  if (error) {
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-        {error}
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+  //       {error}
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
