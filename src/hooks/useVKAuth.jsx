@@ -41,7 +41,7 @@ export function useVKAuth() {
       const authParams = new URLSearchParams({
         response_type: "code",
         client_id: "53263292",
-        redirect_uri: "https://uni-eo0p.onrender.com/messages",
+        redirect_uri: "https://uni-eo0p.onrender.com/vk-callback",
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
         state: state,
