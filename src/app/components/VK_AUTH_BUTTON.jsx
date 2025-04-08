@@ -4,20 +4,23 @@ import { useRouter } from "next/navigation";
 
 export default function VKAuthButton({ onSuccess, onError }) {
   const router = useRouter();
-  useEffect(() => {
-    const checkServerConnection = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/healthcheck");
-        if (!response.ok) throw new Error("Сервер не отвечает");
-        alert("Соединение с сервером установлено");
-      } catch (error) {
-        console.error("Ошибка соединения:", error);
-        alert("Ошибка подключения к серверу");
-      }
-    };
 
+  // Перенесём проверку соединения в отдельную функцию
+  const checkServerConnection = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/healthcheck");
+      if (!response.ok) throw new Error("Сервер не отвечает");
+      console.log("Соединение с сервером установлено");
+    } catch (error) {
+      console.error("Ошибка соединения:", error);
+      onError?.(error.message);
+    }
+  };
+
+  useEffect(() => {
     checkServerConnection();
   }, []);
+
   const generateCodeVerifier = () => {
     const array = new Uint8Array(64);
     window.crypto.getRandomValues(array);
@@ -40,15 +43,15 @@ export default function VKAuthButton({ onSuccess, onError }) {
     try {
       const codeVerifier = generateCodeVerifier();
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-      const state = codeVerifier.slice(0, 43); // Используем часть codeVerifier
+      const state = codeVerifier.slice(0, 43);
 
       sessionStorage.setItem("vk_code_verifier", codeVerifier);
       sessionStorage.setItem("vk_auth_state", state);
-      alert("проверкаааа,1"); //это выводит
+
       const authParams = new URLSearchParams({
         response_type: "code",
         client_id: "53263292",
-        redirect_uri: "https://uni-eo0p.onrender.com/messages",
+        redirect_uri: "https://www.unimessage.ru/messages",
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
         state: state,
@@ -63,9 +66,9 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
   useEffect(() => {
     const handleCallback = async () => {
-      alert("--- STARTING CALLBACK HANDLER ---");
+      console.log("--- STARTING CALLBACK HANDLER ---");
       const params = new URLSearchParams(window.location.search);
-      alert("URL search params:", params.toString());
+      console.log("URL search params:", params.toString());
 
       const code = params.get("code");
       const state = params.get("state");
@@ -73,14 +76,13 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
       if (!code) {
         console.error("No code parameter in URL");
-        alert("кода нету");
         return;
       }
 
       try {
-        alert("Retrieving state from sessionStorage");
+        console.log("Retrieving state from sessionStorage");
         const savedState = sessionStorage.getItem("vk_auth_state");
-        alert("Saved state:", savedState, "Received state:", state);
+        console.log("Saved state:", savedState, "Received state:", state);
 
         if (state !== savedState) {
           throw new Error(
@@ -89,17 +91,17 @@ export default function VKAuthButton({ onSuccess, onError }) {
         }
 
         const codeVerifier = sessionStorage.getItem("vk_code_verifier");
-        alert("Code verifier exists:", !!codeVerifier);
+        console.log("Code verifier exists:", !!codeVerifier);
         if (!codeVerifier) throw new Error("Missing code verifier");
-        //
-        alert("Preparing exchange request...");
+
+        console.log("Preparing exchange request...");
         const requestBody = new URLSearchParams({
           code,
           code_verifier: codeVerifier,
           device_id: deviceId || "",
         });
-        alert("Request body:", requestBody.toString());
 
+        console.log("Sending request to exchange code...");
         const response = await fetch(
           "http://localhost:3000/api/exchange-code",
           {
@@ -111,42 +113,43 @@ export default function VKAuthButton({ onSuccess, onError }) {
           },
         );
 
-        alert("Response status:", response.status);
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Response error:", errorText);
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(
+            `HTTP error! status: ${response.status}, ${errorText}`,
+          );
         }
 
         const tokens = await response.json();
-        alert("Received tokens:", tokens);
+        console.log("Received tokens:", tokens);
 
         localStorage.setItem("vk_access_token", tokens.access_token);
         localStorage.setItem(
           "token_expires",
           Date.now() + tokens.expires_in * 1000,
         );
-        alert("Tokens saved to localStorage");
 
         onSuccess?.(tokens);
         router.push("/messages");
 
-        alert("Cleaning URL...");
-        window.history.replaceState({}, "", window.location.pathname);
+        // Очищаем URL от параметров
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
       } catch (error) {
         console.error("Callback error:", error);
         onError?.(error.message);
       } finally {
         sessionStorage.removeItem("vk_code_verifier");
         sessionStorage.removeItem("vk_auth_state");
-        alert("Session storage cleaned");
       }
     };
-    //
-    alert("Checking if should handle callback...");
+
     const params = new URLSearchParams(window.location.search);
     if (params.has("code")) {
-      alert("Code detected, starting callback handler");
+      console.log("Code detected, starting callback handler");
       handleCallback();
     }
   }, [onSuccess, onError, router]);

@@ -18,7 +18,7 @@ export default function Messages() {
         // localStorage.removeItem("vk_access_token");
         // localStorage.removeItem("token_expires");
         // router.push("/");
-        alert("что?");
+        alert("что наху?");
         return false;
       }
       return true;
