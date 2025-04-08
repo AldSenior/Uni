@@ -75,7 +75,7 @@ export function useVKAuth() {
         code,
       )}&code_verifier=${encodeURIComponent(codeVerifier)}`;
 
-      const response = await fetch("http://localhost:3000/api/exchange-code", {
+      const response = await fetch("http://localhost:3001/api/exchange-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
