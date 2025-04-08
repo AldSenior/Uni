@@ -67,10 +67,7 @@ export function useVKAuth() {
       const codeVerifier = sessionStorage.getItem("vk_code_verifier");
       if (!codeVerifier) throw new Error("Missing code verifier");
 
-      const requestBody = new URLSearchParams({
-        code,
-        code_verifier: codeVerifier,
-      });
+      const requestBody = `code=${encodeURIComponent(code)}&code_verifier=${encodeURIComponent(code_verifier)}`;
 
       const response = await fetch("http://localhost:3000/api/exchange-code", {
         method: "POST",
