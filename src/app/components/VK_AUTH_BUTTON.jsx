@@ -63,64 +63,92 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
   useEffect(() => {
     const handleCallback = async () => {
+      console.log("--- STARTING CALLBACK HANDLER ---");
       const params = new URLSearchParams(window.location.search);
+      console.log("URL search params:", params.toString());
+
       const code = params.get("code");
       const state = params.get("state");
       const deviceId = params.get("device_id");
 
       if (!code) {
+        console.error("No code parameter in URL");
         alert("кода нету");
         return;
-      } // Прекращаем выполнение если нет кода
+      }
 
       try {
+        console.log("Retrieving state from sessionStorage");
         const savedState = sessionStorage.getItem("vk_auth_state");
-        if (state !== savedState) throw new Error("Invalid state");
+        console.log("Saved state:", savedState, "Received state:", state);
+
+        if (state !== savedState) {
+          throw new Error(
+            `Invalid state: expected ${savedState}, got ${state}`,
+          );
+        }
 
         const codeVerifier = sessionStorage.getItem("vk_code_verifier");
+        console.log("Code verifier exists:", !!codeVerifier);
         if (!codeVerifier) throw new Error("Missing code verifier");
+
+        console.log("Preparing exchange request...");
+        const requestBody = new URLSearchParams({
+          code,
+          code_verifier: codeVerifier,
+          device_id: deviceId || "",
+        });
+        console.log("Request body:", requestBody.toString());
 
         const response = await fetch(
           "https://www.unimessage.ru/api/exchange-code",
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/x-www-form-urlencoded", // Исправлено!
+              "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: new URLSearchParams({
-              // Используйте URLSearchParams
-              code,
-              code_verifier: codeVerifier,
-              device_id: deviceId,
-            }),
+            body: requestBody,
           },
         );
 
+        console.log("Response status:", response.status);
         if (!response.ok) {
-          alert("всм");
+          const errorText = await response.text();
+          console.error("Response error:", errorText);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const tokens = await response.json();
+        console.log("Received tokens:", tokens);
+
         localStorage.setItem("vk_access_token", tokens.access_token);
-        // Добавляем сохранение времени экспирации
         localStorage.setItem(
           "token_expires",
           Date.now() + tokens.expires_in * 1000,
         );
+        console.log("Tokens saved to localStorage");
 
         onSuccess?.(tokens);
         router.push("/messages");
-        // Очищаем URL от параметров авторизации
+
+        console.log("Cleaning URL...");
         window.history.replaceState({}, "", window.location.pathname);
       } catch (error) {
+        console.error("Callback error:", error);
         onError?.(error.message);
       } finally {
         sessionStorage.removeItem("vk_code_verifier");
         sessionStorage.removeItem("vk_auth_state");
+        console.log("Session storage cleaned");
       }
     };
 
-    handleCallback();
+    console.log("Checking if should handle callback...");
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("code")) {
+      console.log("Code detected, starting callback handler");
+      handleCallback();
+    }
   }, [onSuccess, onError, router]);
 
   return (
