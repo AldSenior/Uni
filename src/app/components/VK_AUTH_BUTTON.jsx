@@ -91,7 +91,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
         const codeVerifier = sessionStorage.getItem("vk_code_verifier");
         alert("Code verifier exists:", !!codeVerifier);
         if (!codeVerifier) throw new Error("Missing code verifier");
-
+        //
         alert("Preparing exchange request...");
         const requestBody = new URLSearchParams({
           code,
