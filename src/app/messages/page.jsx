@@ -14,11 +14,11 @@ export default function Messages() {
       const token = localStorage.getItem("vk_access_token");
       const expires = localStorage.getItem("token_expires");
 
-      if (!token || !expires || Date.now() > parseInt(expires)) {
+      if (!token || !expires) {
         // localStorage.removeItem("vk_access_token");
         // localStorage.removeItem("token_expires");
         // router.push("/");
-        alert("что нахуй?");
+        alert("что?");
         return false;
       }
       return true;

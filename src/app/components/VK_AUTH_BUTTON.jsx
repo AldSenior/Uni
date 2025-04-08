@@ -44,11 +44,11 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
       sessionStorage.setItem("vk_code_verifier", codeVerifier);
       sessionStorage.setItem("vk_auth_state", state);
-      alert("проверкаааа,1");
+      alert("проверкаааа,1"); //это выводит
       const authParams = new URLSearchParams({
         response_type: "code",
         client_id: "53263292",
-        redirect_uri: "https://www.unimessage.ru/messages",
+        redirect_uri: "https://uni-eo0p.onrender.com/messages",
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
         state: state,
