@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useVKAuth } from "@/hooks/useVKAuth";
 
 export default function Messages() {
   const [messages, setMessages] = useState([]);
@@ -8,28 +9,35 @@ export default function Messages() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const { checkAuth, exchangeCodeForToken, logout } = useVKAuth();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("vk_access_token");
-      const expires = localStorage.getItem("token_expires");
-
-      if (!token || !expires) {
-        // localStorage.removeItem("vk_access_token");
-        // localStorage.removeItem("token_expires");
-        // router.push("/");
-        alert("что наху?");
-        return false;
-      }
-      return true;
-    };
-
     const fetchMessages = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        if (!checkAuth()) return;
+        // Проверяем авторизацию
+        if (!checkAuth()) {
+          // Если есть код в URL, пробуем обменять его на токен
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get("code");
+          const state = params.get("state");
+
+          if (code && state) {
+            try {
+              await exchangeCodeForToken(code, state);
+              window.history.replaceState({}, "", window.location.pathname);
+              // После успешного обмена продолжаем загрузку сообщений
+            } catch (err) {
+              setError("Ошибка авторизации: " + err.message);
+              return;
+            }
+          } else {
+            router.push("/");
+            return;
+          }
+        }
 
         const token = localStorage.getItem("vk_access_token");
 
@@ -40,11 +48,7 @@ export default function Messages() {
         });
 
         if (response.status === 401) {
-          // localStorage.removeItem("vk_access_token");
-          // localStorage.removeItem("token_expires");
-          // router.push("/");
-          //
-          alert("че блять 401");
+          logout();
           return;
         }
 
@@ -74,7 +78,7 @@ export default function Messages() {
     };
 
     fetchMessages();
-  }, [router]);
+  }, [checkAuth, exchangeCodeForToken, logout, router]);
 
   const getUserName = (peerId) => {
     const profile = profiles[peerId];
