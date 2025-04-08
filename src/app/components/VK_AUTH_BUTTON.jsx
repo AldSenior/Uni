@@ -101,7 +101,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
         console.log("Request body:", requestBody.toString());
 
         const response = await fetch(
-          "https://www.unimessage.ru/api/exchange-code",
+          "http://localhost:3000/api/exchange-code",
           {
             method: "POST",
             headers: {
