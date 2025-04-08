@@ -142,7 +142,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
         console.log("Session storage cleaned");
       }
     };
-
+    //
     console.log("Checking if should handle callback...");
     const params = new URLSearchParams(window.location.search);
     if (params.has("code")) {
