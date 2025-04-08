@@ -9,7 +9,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
       try {
         const response = await fetch("http://localhost:3000/api/healthcheck");
         if (!response.ok) throw new Error("Сервер не отвечает");
-        console.log("Соединение с сервером установлено");
+        alert("Соединение с сервером установлено");
       } catch (error) {
         console.error("Ошибка соединения:", error);
         alert("Ошибка подключения к серверу");
@@ -44,7 +44,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
       sessionStorage.setItem("vk_code_verifier", codeVerifier);
       sessionStorage.setItem("vk_auth_state", state);
-
+      alert("проверкаааа,1");
       const authParams = new URLSearchParams({
         response_type: "code",
         client_id: "53263292",
@@ -63,9 +63,9 @@ export default function VKAuthButton({ onSuccess, onError }) {
 
   useEffect(() => {
     const handleCallback = async () => {
-      console.log("--- STARTING CALLBACK HANDLER ---");
+      alert("--- STARTING CALLBACK HANDLER ---");
       const params = new URLSearchParams(window.location.search);
-      console.log("URL search params:", params.toString());
+      alert("URL search params:", params.toString());
 
       const code = params.get("code");
       const state = params.get("state");
@@ -78,9 +78,9 @@ export default function VKAuthButton({ onSuccess, onError }) {
       }
 
       try {
-        console.log("Retrieving state from sessionStorage");
+        alert("Retrieving state from sessionStorage");
         const savedState = sessionStorage.getItem("vk_auth_state");
-        console.log("Saved state:", savedState, "Received state:", state);
+        alert("Saved state:", savedState, "Received state:", state);
 
         if (state !== savedState) {
           throw new Error(
@@ -89,16 +89,16 @@ export default function VKAuthButton({ onSuccess, onError }) {
         }
 
         const codeVerifier = sessionStorage.getItem("vk_code_verifier");
-        console.log("Code verifier exists:", !!codeVerifier);
+        alert("Code verifier exists:", !!codeVerifier);
         if (!codeVerifier) throw new Error("Missing code verifier");
 
-        console.log("Preparing exchange request...");
+        alert("Preparing exchange request...");
         const requestBody = new URLSearchParams({
           code,
           code_verifier: codeVerifier,
           device_id: deviceId || "",
         });
-        console.log("Request body:", requestBody.toString());
+        alert("Request body:", requestBody.toString());
 
         const response = await fetch(
           "http://localhost:3000/api/exchange-code",
@@ -111,7 +111,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
           },
         );
 
-        console.log("Response status:", response.status);
+        alert("Response status:", response.status);
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Response error:", errorText);
@@ -119,19 +119,19 @@ export default function VKAuthButton({ onSuccess, onError }) {
         }
 
         const tokens = await response.json();
-        console.log("Received tokens:", tokens);
+        alert("Received tokens:", tokens);
 
         localStorage.setItem("vk_access_token", tokens.access_token);
         localStorage.setItem(
           "token_expires",
           Date.now() + tokens.expires_in * 1000,
         );
-        console.log("Tokens saved to localStorage");
+        alert("Tokens saved to localStorage");
 
         onSuccess?.(tokens);
         router.push("/messages");
 
-        console.log("Cleaning URL...");
+        alert("Cleaning URL...");
         window.history.replaceState({}, "", window.location.pathname);
       } catch (error) {
         console.error("Callback error:", error);
@@ -139,14 +139,14 @@ export default function VKAuthButton({ onSuccess, onError }) {
       } finally {
         sessionStorage.removeItem("vk_code_verifier");
         sessionStorage.removeItem("vk_auth_state");
-        console.log("Session storage cleaned");
+        alert("Session storage cleaned");
       }
     };
     //
-    console.log("Checking if should handle callback...");
+    alert("Checking if should handle callback...");
     const params = new URLSearchParams(window.location.search);
     if (params.has("code")) {
-      console.log("Code detected, starting callback handler");
+      alert("Code detected, starting callback handler");
       handleCallback();
     }
   }, [onSuccess, onError, router]);
