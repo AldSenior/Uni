@@ -1,4 +1,7 @@
 "use client";
+
+export const dynamic = "force-dynamic"; // 👈 это отключает пререндер
+
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
@@ -12,7 +15,6 @@ export default function VKCallback() {
     const user_id = searchParams.get("user_id");
 
     if (token) {
-      // Отправляем токен на backend для сохранения в сессии
       axios
         .post(
           "http://localhost:3001/api/save-token",
