@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
-import { useVKAuth } from "../hooks/useVKAuth";
-
+import { useVKAuth } from "../../hooks/useVKAuth";
+//
 export default function VKAuthButton({ onSuccess, onError }) {
   const { startAuth, exchangeCodeForToken, isLoading, error } = useVKAuth();
 
