@@ -51,7 +51,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
       const authParams = new URLSearchParams({
         response_type: "code",
         client_id: "53263292",
-        redirect_uri: "https://www.unimessage.ru/messages",
+        redirect_uri: "https://uni-eo0p.onrender.com/messages",
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
         state: state,
