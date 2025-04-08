@@ -13,6 +13,8 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(
   session({
     secret: "vk_secret",
@@ -28,6 +30,48 @@ app.get("/auth/vk", (req, res) => {
   res.redirect(vkAuthUrl);
 });
 
+app.post("/api/exchange-code", async (req, res) => {
+  const { code, code_verifier } = req.body;
+
+  if (!code || !code_verifier) {
+    return res.status(400).json({ error: "Missing code or code_verifier" });
+  }
+
+  try {
+    const response = await axios.post(
+      "https://api.vk.com/oauth/token",
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: 53263292,
+        client_secret: "xK4loxyZGbRjhC7OjBw2",
+        redirect_uri: "https://uni-eo0p.onrender.com/vk-callback",
+        code,
+        code_verifier,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      },
+    );
+
+    // Сохраняем токен в сессию (или куда хочешь)
+    req.session.vk = {
+      access_token: response.data.access_token,
+      user_id: response.data.user_id,
+      expires_in: response.data.expires_in,
+    };
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(
+      "VK Token Exchange Error:",
+      err.response?.data || err.message,
+    );
+    res.status(500).json({ error: "Token exchange failed" });
+  }
+});
+
 // 🔁 VK Callback
 app.get("/auth/vk/callback", async (req, res) => {
   const { code } = req.query;
@@ -35,9 +79,9 @@ app.get("/auth/vk/callback", async (req, res) => {
   try {
     const response = await axios.get("https://oauth.vk.com/access_token", {
       params: {
-        client_id: process.env.VK_CLIENT_ID,
-        client_secret: process.env.VK_CLIENT_SECRET,
-        redirect_uri: process.env.VK_REDIRECT_URI,
+        client_id: 53263292,
+        client_secret: "xK4loxyZGbRjhC7OjBw2",
+        redirect_uri: "https://uni-eo0p.onrender.com/vk-callback",
         code,
       },
     });
