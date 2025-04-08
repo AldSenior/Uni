@@ -76,7 +76,7 @@ export default function Messages() {
     };
 
     fetchMessages();
-  }, [exchangeCodeForToken, logout, router]);
+  }, [exchangeCodeForToken, logout, router, checkAuth]);
 
   return (
     <div>

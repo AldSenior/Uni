@@ -7,6 +7,7 @@ export function useVKAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Генерация code_verifier длиной до 128 символов
   const generateCodeVerifier = () => {
     const array = new Uint8Array(64);
     window.crypto.getRandomValues(array);
@@ -15,6 +16,7 @@ export function useVKAuth() {
       .slice(0, 128);
   };
 
+  // Генерация code_challenge на основе code_verifier (PKCE)
   const generateCodeChallenge = async (codeVerifier) => {
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
@@ -25,6 +27,7 @@ export function useVKAuth() {
       .replace(/=+$/, "");
   };
 
+  // Запуск авторизации через VK
   const startAuth = async () => {
     try {
       setIsLoading(true);
@@ -54,6 +57,7 @@ export function useVKAuth() {
     }
   };
 
+  // Обмен кода на токен
   const exchangeCodeForToken = async (code, state) => {
     try {
       setIsLoading(true);
@@ -67,7 +71,9 @@ export function useVKAuth() {
       const codeVerifier = sessionStorage.getItem("vk_code_verifier");
       if (!codeVerifier) throw new Error("Missing code verifier");
 
-      const requestBody = `code=${encodeURIComponent(code)}&code_verifier=${encodeURIComponent(codeVerifier)}`;
+      const requestBody = `code=${encodeURIComponent(
+        code,
+      )}&code_verifier=${encodeURIComponent(codeVerifier)}`;
 
       const response = await fetch("http://localhost:3000/api/exchange-code", {
         method: "POST",
@@ -90,7 +96,6 @@ export function useVKAuth() {
         Date.now() + tokens.expires_in * 1000,
       );
 
-      // Очищаем session storage
       sessionStorage.removeItem("vk_code_verifier");
       sessionStorage.removeItem("vk_auth_state");
 
@@ -103,6 +108,7 @@ export function useVKAuth() {
     }
   };
 
+  // Проверка наличия валидного токена
   const checkAuth = () => {
     const token = localStorage.getItem("vk_access_token");
     const expires = localStorage.getItem("token_expires");
@@ -113,6 +119,7 @@ export function useVKAuth() {
     return true;
   };
 
+  // Выход из системы
   const logout = () => {
     localStorage.removeItem("vk_access_token");
     localStorage.removeItem("token_expires");
