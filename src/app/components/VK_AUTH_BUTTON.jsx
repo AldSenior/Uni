@@ -81,11 +81,14 @@ export default function VKAuthButton({ onSuccess, onError }) {
         if (!codeVerifier) throw new Error("Missing code verifier");
 
         const response = await fetch(
-          "http://localhost:3000/api/exchange-code",
+          "https://www.unimessage.ru/api/exchange-code",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded", // Исправлено!
+            },
+            body: new URLSearchParams({
+              // Используйте URLSearchParams
               code,
               code_verifier: codeVerifier,
               device_id: deviceId,
