@@ -26,7 +26,7 @@ app.use(
 
 // 🔗 OAuth Redirect
 app.get("/auth/vk", (req, res) => {
-  const vkAuthUrl = `https://oauth.vk.com/authorize?client_id=${process.env.VK_CLIENT_ID}&display=page&redirect_uri=${process.env.VK_REDIRECT_URI}&scope=messages&response_type=code&v=5.131`;
+  const vkAuthUrl = `https://oauth.vk.com/authorize?client_id=${53403918}&display=page&redirect_uri=${"https://uni-eo0p.onrender.com/vk-callback"}&scope=messages&response_type=code&v=5.131`;
   res.redirect(vkAuthUrl);
 });
 
@@ -42,8 +42,8 @@ app.post("/api/exchange-code", async (req, res) => {
       "https://api.vk.com/oauth/token",
       new URLSearchParams({
         grant_type: "authorization_code",
-        client_id: 53263292,
-        client_secret: "xK4loxyZGbRjhC7OjBw2",
+        client_id: 53403918,
+        client_secret: "YYxzyLn87hiJPTasL6tc",
         redirect_uri: "https://uni-eo0p.onrender.com/vk-callback",
         code,
         code_verifier,
@@ -79,8 +79,8 @@ app.get("/auth/vk/callback", async (req, res) => {
   try {
     const response = await axios.get("https://oauth.vk.com/access_token", {
       params: {
-        client_id: 53263292,
-        client_secret: "xK4loxyZGbRjhC7OjBw2",
+        client_id: 53403918,
+        client_secret: "YYxzyLn87hiJPTasL6tc",
         redirect_uri: "https://uni-eo0p.onrender.com/vk-callback",
         code,
       },
