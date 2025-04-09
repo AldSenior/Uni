@@ -1,5 +1,5 @@
 "use client";
-import { useVKAuth } from "../hooks/useVKAuth";
+import { useVKAuth } from "../../hooks/useVKAuth";
 
 export default function VKAuthButton() {
   const { startAuth, isLoading } = useVKAuth();
