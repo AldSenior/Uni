@@ -7,22 +7,13 @@ export function useVKAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 🔗 Начать авторизацию через серверный редирект
-  const startAuth = async () => {
-    try {
-      setIsLoading(true);
-      window.location.href = "http://localhost:3001/auth/vk"; // 👈 локальный сервер
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const startAuth = () => {
+    setIsLoading(true);
+    window.location.href = "http://localhost:3001/auth/vk"; // Серверный редирект
   };
 
-  // ✅ Сохранить токен (после редиректа на фронт)
   const saveToken = async (token, user_id) => {
     try {
-      setIsLoading(true);
       const res = await fetch("http://localhost:3001/api/save-token", {
         method: "POST",
         credentials: "include",
@@ -39,18 +30,9 @@ export function useVKAuth() {
     } catch (err) {
       setError(err.message);
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // 🔍 Проверка авторизации
-  const checkAuth = () => {
-    const token = localStorage.getItem("vk_access_token");
-    return Boolean(token);
-  };
-
-  // 🚪 Выход
   const logout = () => {
     localStorage.removeItem("vk_access_token");
     router.push("/");
@@ -59,7 +41,6 @@ export function useVKAuth() {
   return {
     startAuth,
     saveToken,
-    checkAuth,
     logout,
     isLoading,
     error,

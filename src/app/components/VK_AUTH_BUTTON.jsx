@@ -1,32 +1,8 @@
 "use client";
-import { useEffect } from "react";
-import { useVKAuth } from "../../hooks/useVKAuth";
+import { useVKAuth } from "../hooks/useVKAuth";
 
-export default function VKAuthButton({ onSuccess, onError }) {
-  const { startAuth, exchangeCodeForToken, isLoading } = useVKAuth();
-
-  useEffect(() => {
-    const handleCallback = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const state = params.get("state");
-
-      if (!code) return;
-
-      try {
-        const tokens = await exchangeCodeForToken(code, state);
-        onSuccess?.(tokens);
-        window.history.replaceState({}, "", window.location.pathname);
-      } catch (err) {
-        onError?.(err.message);
-      }
-    };
-
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("code")) {
-      handleCallback();
-    }
-  }, [exchangeCodeForToken, onSuccess, onError]);
+export default function VKAuthButton() {
+  const { startAuth, isLoading } = useVKAuth();
 
   return (
     <button
@@ -36,6 +12,7 @@ export default function VKAuthButton({ onSuccess, onError }) {
         padding: "10px 20px",
         backgroundColor: "#0077FF",
         color: "white",
+        borderRadius: "8px",
         opacity: isLoading ? 0.7 : 1,
       }}
     >

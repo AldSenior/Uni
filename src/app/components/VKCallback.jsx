@@ -1,31 +1,29 @@
 "use client";
-
 import { useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useVKAuth } from "../../hooks/useVKAuth";
+
 export default function VKCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { exchangeCodeForToken, error, isLoading } = useVKAuth();
+  const { saveToken } = useVKAuth();
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const token = searchParams.get("token");
+    const user_id = searchParams.get("user_id");
 
-    if (code && state) {
-      exchangeCodeForToken(code, state)
-        .then(() => router.push("/messages"))
-        .catch((err) => {
-          console.error("VK токен обмен не удался:", err.message);
-        });
+    if (token && user_id) {
+      saveToken(token, user_id).then(() => {
+        router.push("/dashboard");
+      });
+    } else {
+      router.push("/?error=auth_failed");
     }
   }, [searchParams]);
 
   return (
     <div className="p-4 text-center">
-      <p>⏳ Обрабатываем вход через VK...</p>
-      {isLoading && <p>Загрузка...</p>}
-      {error && <p className="text-red-500">Ошибка: {error}</p>}
+      <p>🔄 Обработка VK ID авторизации...</p>
     </div>
   );
 }
