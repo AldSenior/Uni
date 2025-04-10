@@ -1,113 +1,239 @@
+// Express сервер с VK LongPoll (одиночное соединение только для себя)
 const express = require("express");
-const axios = require("axios");
+const easyvk = require("easyvk");
+const http = require("http");
+const bodyParser = require("body-parser");
 const cors = require("cors");
-const session = require("express-session");
-const dotenv = require("dotenv");
-const { generatePKCE } = require("./utils/pkce");
-
-dotenv.config();
+const fetch = require("node-fetch");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const server = http.createServer(app);
+app.use(cors({ origin: "http://localhost:3000" }));
+app.use(bodyParser.json());
+const port = process.env.PORT || 3001;
 
-app.use(
-  cors({
-    origin: "https://uni-eo0p.onrender.com",
-    credentials: true,
-  }),
-);
+let latestTs = null;
+let pollingStarted = false;
+let connectedClient = null;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Хранение последнего токена и user_id
+let activeToken = null;
+let activeUserId = null;
 
-app.use(
-  session({
-    secret: "vk_super_secret",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }, // secure: true на HTTPS
-  }),
-);
+const startLongPoll = async () => {
+  if (!activeToken || !activeUserId || pollingStarted) return;
 
-// 🔗 Авторизация VK ID (начало)
-app.get("/auth/vk", (req, res) => {
-  const { code_verifier, code_challenge } = generatePKCE();
-  req.session.code_verifier = code_verifier;
+  pollingStarted = true;
+  const vk = await easyvk({ token: activeToken, vk_api_version: "5.131" });
 
-  const vkAuthUrl = `https://id.vk.com/oauth/authorize?response_type=code&client_id=${process.env.VK_CLIENT_ID}&redirect_uri=${process.env.VK_REDIRECT_URI}&scope=openid,profile,email&code_challenge=${code_challenge}&code_challenge_method=S256`;
+  const serverInfo = await vk.call("messages.getLongPollServer");
+  latestTs = serverInfo.ts;
+  const { server: lpServer, key } = serverInfo;
 
-  res.redirect(vkAuthUrl);
+  const poll = async () => {
+    try {
+      const response = await fetch(
+        `https://${lpServer}?act=a_check&key=${key}&ts=${latestTs}&wait=25&mode=2&version=3`,
+      );
+      const data = await response.json();
+
+      if (data.updates && Array.isArray(data.updates)) {
+        for (const update of data.updates) {
+          if (update[0] === 4) {
+            const message = {
+              id: update[1],
+              flags: update[2],
+              peer_id: update[3],
+              timestamp: update[4],
+              text: update[5],
+              attachments: update[6],
+            };
+
+            connectedClient?.res?.write(`data: ${JSON.stringify(message)}\n\n`);
+          }
+        }
+      }
+
+      latestTs = data.ts;
+      setImmediate(poll);
+    } catch (err) {
+      console.error("Ошибка в LongPoll:", err);
+      setTimeout(poll, 5000);
+    }
+  };
+
+  poll();
+};
+
+// SSE подключение
+app.get("/events", (req, res) => {
+  const { token, user_id } = req.query;
+  if (!token || !user_id) {
+    return res.status(400).json({ error: "Нужны token и user_id" });
+  }
+
+  activeToken = token;
+  activeUserId = user_id;
+  connectedClient = { res };
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  startLongPoll();
+
+  req.on("close", () => {
+    console.log("SSE клиент отключился");
+    connectedClient = null;
+  });
 });
 
-// 🔁 Обмен кода на токен
-app.get("/auth/vk/callback", async (req, res) => {
-  const { code } = req.query;
-  const code_verifier = req.session.code_verifier;
-
-  if (!code || !code_verifier) {
-    return res.status(400).json({ error: "Missing code or code_verifier" });
+// Остальной функционал API как есть
+// Авторизация
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Требуются логин и пароль" });
   }
 
   try {
-    const tokenRes = await axios.post(
-      "https://api.vk.com/oauth/token",
-      new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: process.env.VK_REDIRECT_URI,
-        client_id: process.env.VK_CLIENT_ID,
-        code_verifier,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      },
-    );
+    const vk = await easyvk({
+      username,
+      password,
+      vk_api_version: "5.131",
+      authScope: "messages",
+    });
 
-    const { access_token, id_token, user_id } = tokenRes.data;
+    if (!vk.session.first_name) {
+      return res
+        .status(401)
+        .json({
+          status: "error",
+          message: "Не удалось получить данные пользователя VK",
+        });
+    }
 
-    req.session.vk = { access_token, id_token, user_id };
-
-    res.redirect(
-      `https://uni-eo0p.onrender.com/vk-callback?token=${access_token}&user_id=${user_id}`,
-    );
-  } catch (err) {
-    console.error(
-      "VK Token Exchange Error:",
-      err.response?.data || err.message,
-    );
-    res.status(500).send("Token exchange failed");
+    res.json({
+      status: "success",
+      user: `${vk.session.first_name} ${vk.session.last_name}`,
+      token: vk.session.access_token,
+    });
+  } catch (error) {
+    res
+      .status(401)
+      .json({
+        status: "error",
+        message: "Ошибка авторизации",
+        details: error.message,
+      });
   }
 });
 
-// 📩 Пример вызова VK API
-app.get("/api/status", async (req, res) => {
-  const { access_token } = req.session.vk || {};
-  if (!access_token) return res.status(401).json({ error: "Unauthorized" });
-
+app.get("/messages", async (req, res) => {
+  const { token, offset = 0, count = 200 } = req.query;
+  if (!token)
+    return res
+      .status(400)
+      .json({ status: "error", message: "Не передан токен" });
   try {
-    const vkRes = await axios.get(
-      "https://api.vk.com/method/status.get?v=5.131",
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      },
-    );
-
-    res.json(vkRes.data);
-  } catch (err) {
-    console.error("VK API error:", err.response?.data || err.message);
-    res.status(500).json({ error: "VK API failed" });
+    const vk = await easyvk({ token, vk_api_version: "5.131" });
+    const response = await vk.call("messages.getConversations", {
+      offset: parseInt(offset),
+      count: parseInt(count),
+    });
+    res.json({ status: "success", items: response.items });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
-// 🧪 Отладка
-app.get("/session", (req, res) => {
-  res.json(req.session);
+app.get("/history", async (req, res) => {
+  const { token, user_id } = req.query;
+  if (!token || !user_id)
+    return res
+      .status(400)
+      .json({ status: "error", message: "Нужны token и user_id" });
+  try {
+    const vk = await easyvk({ token, vk_api_version: "5.131" });
+    const response = await vk.call("messages.getHistory", {
+      user_id,
+      count: 200,
+      rev: 1,
+    });
+    res.json({ status: "success", messages: response.items });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
 });
 
-app.listen(PORT, () =>
-  console.log(`🚀 VK Auth Server running on http://localhost:${PORT}`),
-);
+app.post("/send", async (req, res) => {
+  const { token, user_id, message } = req.body;
+  if (!token || !user_id || !message)
+    return res
+      .status(400)
+      .json({ status: "error", message: "Недостаточно данных" });
+  try {
+    const vk = await easyvk({ token, vk_api_version: "5.131" });
+    await vk.call("messages.send", {
+      user_id,
+      message,
+      random_id: easyvk.randomId(),
+    });
+    res.json({ status: "success" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.get("/user", async (req, res) => {
+  const { token, user_id } = req.query;
+  if (!token || !user_id)
+    return res
+      .status(400)
+      .json({ status: "error", message: "Нужны token и user_id" });
+  try {
+    const vk = await easyvk({ token, vk_api_version: "5.131" });
+    const uid = parseInt(user_id, 10);
+    if (uid > 2000000000) {
+      const response = await vk.call("messages.getConversations", {
+        peer_ids: uid,
+        extended: 1,
+      });
+      const item = response.items?.[0];
+      return res.json({
+        status: "success",
+        name: item?.conversation?.chat_settings?.title || "Групповой чат",
+        photo: item?.conversation?.chat_settings?.photo?.photo_100,
+      });
+    } else if (uid < 0) {
+      const response = await vk.call("groups.getById", {
+        group_id: Math.abs(uid),
+        fields: "photo_100",
+      });
+      const group = response[0];
+      return res.json({
+        status: "success",
+        name: group.name,
+        photo: group.photo_100,
+      });
+    } else {
+      const response = await vk.call("users.get", {
+        user_ids: uid,
+        fields: "photo_100",
+      });
+      const user = response[0];
+      return res.json({
+        status: "success",
+        name: `${user.first_name} ${user.last_name}`,
+        photo: user.photo_100,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+server.listen(port, () => {
+  console.log(`🚀 Сервер с SSE слушает http://localhost:${port}`);
+});

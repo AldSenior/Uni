@@ -1,82 +1,97 @@
 "use client";
 import { useState, useEffect } from "react";
-import VKAuthButton from "./components/VK_AUTH_BUTTON";
+import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
-
-  const handleSuccess = (data) => {
-    setUser(data.user);
-    setError(null);
-    // Здесь можно перенаправить пользователя или обновить состояние приложения
-    console.log("Auth success:", data.user);
-  };
-
-  const handleError = (error) => {
-    setError(error.message || "Ошибка авторизации");
-    console.error("Auth error:", error);
-  };
+export default function Home() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState(null);
+  const router = useRouter();
   useEffect(() => {
-    const handleHashChange = () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const token = localStorage.getItem("vk_token");
+    const savedUser = localStorage.getItem("vk_user");
 
-      if (hashParams.has("code")) {
-        const code = hashParams.get("code");
-        const device_id = hashParams.get("device_id");
+    if (token && savedUser) {
+      router.push("/messages");
+      return;
+    }
+  }, [router]);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setResponse(null);
 
-        // Сохраняем в localStorage
-        localStorage.setItem("vk_code", code);
-        localStorage.setItem("vk_device_id", device_id);
+    try {
+      const res = await fetch("http://localhost:3001/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-        // Очищаем хэш
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname,
-        );
+      const data = await res.json();
+      if (data.status === "success") {
+        localStorage.setItem("vk_user", data.user);
+        localStorage.setItem("vk_token", data.token); // 💾 сохраняем токен
       }
-    };
+      console.log(data);
+      setResponse(data);
+      router.push("/messages");
+    } catch (err) {
+      setResponse({ status: "error", message: "Ошибка подключения к серверу" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Вход через VK ID</h1>
+    <div
+      style={{ maxWidth: 400, margin: "50px auto", fontFamily: "sans-serif" }}
+    >
+      <h2>VK Авторизация</h2>
+      <form onSubmit={handleLogin}>
+        <div style={{ marginBottom: 12 }}>
+          <input
+            type="text"
+            placeholder="Логин (email / телефон)"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={{ width: "100%", padding: 8 }}
+            required
+          />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ width: "100%", padding: 8 }}
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ padding: "8px 16px", width: "100%" }}
+        >
+          {loading ? "Авторизация..." : "Войти"}
+        </button>
+      </form>
 
-      <div className="max-w-md mx-auto">
-        <VKAuthButton onSuccess={handleSuccess} onError={handleError} />
-
-        {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-
-        {user && (
-          <div className="mt-6 p-4 bg-green-50 rounded-lg">
-            <h2 className="text-xl font-semibold">Вы вошли как:</h2>
-            <div className="flex items-center mt-2">
-              {user.photo && (
-                <img
-                  src={user.photo}
-                  alt="User avatar"
-                  className="w-12 h-12 rounded-full mr-3"
-                />
-              )}
-              <div>
-                <p>
-                  {user.firstName} {user.lastName}
-                </p>
-                {user.email && (
-                  <p className="text-sm text-gray-600">{user.email}</p>
-                )}
-              </div>
+      {response && (
+        <div style={{ marginTop: 20 }}>
+          {response.status === "success" ? (
+            <div style={{ color: "green" }}>
+              ✅ Успешно авторизован: <strong>{response.user}</strong>
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div style={{ color: "red" }}>❌ Ошибка: {response.message}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
